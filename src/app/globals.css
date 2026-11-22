@@ -1,26 +1,170 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-paper: #f3f0ea;
+  --color-paper-2: #ebe6dd;
+  --color-ink: #16191d;
+  --color-muted: #7a756d;
+  --color-line: rgb(22 25 29 / 0.12);
+  --color-navy: #0b1a2b;
+  --color-navy-deep: #07121f;
+  --color-teal: #0e3a40;
+  --color-gold: #c9a35b;
+
+  --font-serif: var(--font-bodoni), "Didot", "Bodoni 72", Georgia, serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Lenis smooth scrolling */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--color-paper);
+}
+
+/* Never scroll sideways. `clip` (not `hidden`) keeps position: fixed / sticky and the pins working. */
+html,
+body {
+  overflow-x: clip;
+}
+
+/* GSAP pins write a pixel width measured at load — before the vertical scrollbar exists — so the
+   pinned hero ends up ~15px wider than the page. Cap it to the real page width. */
+.pin-spacer,
+.pin-spacer > * {
+  max-width: 100% !important;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Tailwind v4 no longer gives buttons a pointer cursor — restore it for everything clickable */
+button,
+[role="button"],
+input[type="submit"],
+input[type="button"],
+input[type="reset"],
+select,
+summary,
+label[for] {
+  cursor: pointer;
+}
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+::selection {
+  background: var(--color-gold);
+  color: var(--color-navy-deep);
+}
+
+.serif {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.kicker {
+  font-size: 0.68rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+}
+
+.container-x {
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+@media (min-width: 768px) {
+  .container-x {
+    padding-inline: 3rem;
+  }
+}
+
+/* Hero load-in: words rise out of a mask, image settles */
+.rise {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.08em;
+}
+.rise > span {
+  display: block;
+  animation: rise 1.6s cubic-bezier(0.19, 1, 0.22, 1) both;
+  animation-delay: var(--d, 0s);
+}
+@keyframes rise {
+  from {
+    transform: translateY(110%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+.fade-in {
+  animation: fade-in 1.4s ease both;
+  animation-delay: var(--d, 0s);
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.settle {
+  animation: settle 2.6s cubic-bezier(0.19, 1, 0.22, 1) both;
+}
+@keyframes settle {
+  from {
+    transform: scale(1.18);
+    filter: brightness(0.6);
+  }
+  to {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+/* Underlined form fields */
+.field {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgb(255 255 255 / 0.22);
+  padding: 0.9rem 0;
+  color: white;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.4s ease;
+}
+.field::placeholder {
+  color: rgb(255 255 255 / 0.45);
+}
+.field:focus {
+  border-color: var(--color-gold);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise > span,
+  .fade-in,
+  .settle {
+    animation: none;
+  }
 }
