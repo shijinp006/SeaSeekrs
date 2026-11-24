@@ -1,18 +1,46 @@
 @import "tailwindcss";
 
 @theme {
-  --color-paper: #f3f0ea;
-  --color-paper-2: #ebe6dd;
-  --color-ink: #16191d;
-  --color-muted: #7a756d;
-  --color-line: rgb(22 25 29 / 0.12);
-  --color-navy: #0b1a2b;
-  --color-navy-deep: #07121f;
-  --color-teal: #0e3a40;
-  --color-gold: #c9a35b;
+  /* from the brand: logo aqua, cushion yellow, Gulf water */
+  --color-foam: #f1f6f5;
+  --color-ink: #06222b;
+  --color-aqua: #37d3d0;
+  --color-gold: #f3b62f;
+  --color-navy: #0b2a3a;
+  --color-navy-deep: #04161e;
+
+  --radius-port: clamp(0.9rem, 1.4vw, 1.35rem);
 
   --font-serif: var(--font-bodoni), "Didot", "Bodoni 72", Georgia, serif;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Tones: each section is one calm, solid colour. data-tone sets it. */
+:root,
+[data-tone="foam"] {
+  --bg: #f1f6f5;
+  --fg: #06222b;
+  --mute: #4a646b;
+  --rule: #06222b26;
+  --accent: #08757a;
+}
+[data-tone="shallow"] {
+  --bg: #d3e9e7;
+  --fg: #06222b;
+  --mute: #37565d;
+  --rule: #06222b2e;
+  --accent: #08656b;
+}
+[data-tone="deep"] {
+  --bg: #07333b;
+  --fg: #effaf8;
+  --mute: #a9cbcb;
+  --rule: #effaf82b;
+  --accent: #f3b62f;
+}
+section[data-tone] {
+  background: var(--bg);
+  color: var(--fg);
 }
 
 /* Lenis smooth scrolling */
@@ -28,7 +56,7 @@ html.lenis body {
 }
 
 html {
-  background: var(--color-paper);
+  background: var(--color-navy-deep);
 }
 
 /* Never scroll sideways. `clip` (not `hidden`) keeps position: fixed / sticky and the pins working. */
@@ -45,7 +73,7 @@ body {
 }
 
 body {
-  background: var(--color-paper);
+  background: var(--color-navy-deep);
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
@@ -97,74 +125,131 @@ button:disabled,
   }
 }
 
-/* Hero load-in: words rise out of a mask, image settles */
-.rise {
-  display: block;
-  overflow: hidden;
-  padding-bottom: 0.08em;
+.display {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 1;
+  text-wrap: balance;
 }
-.rise > span {
-  display: block;
-  animation: rise 1.6s cubic-bezier(0.19, 1, 0.22, 1) both;
-  animation-delay: var(--d, 0s);
+/* ---- type scale below the hero: change the sizes here */
+[data-after-hero] {
+  font-size: 0.9375rem;
 }
-@keyframes rise {
-  from {
-    transform: translateY(110%);
+.t-hero {
+  font-size: clamp(2.15rem, 4.3vw, 4.1rem);
+  line-height: 1.06;
+}
+.t-section {
+  font-size: clamp(1.85rem, 3vw, 2.85rem);
+  line-height: 1.1;
+  letter-spacing: -0.018em;
+}
+.t-title {
+  font-size: clamp(1.5rem, 2.1vw, 2.05rem);
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+}
+.t-card {
+  font-size: clamp(1.3rem, 1.7vw, 1.6rem);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+.t-lead {
+  font-size: 1.0313rem;
+  line-height: 1.7;
+}
+/* line masks clip at the line box: leave room for Bodoni's descenders */
+.split-line {
+  padding-bottom: 0.18em;
+}
+.split-line-mask {
+  margin-bottom: -0.18em;
+}
+
+/* ---- picture cards: a slow zoom on hover, and just enough shade for the words.
+   `scale` is its own property, so it never fights the transform that MotionRoot animates */
+.card-img {
+  transition: scale 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.card-shade {
+  background: linear-gradient(to top, rgb(3 38 52 / 0.88), rgb(3 38 52 / 0.62) 16%, rgb(3 38 52 / 0.2) 33%, transparent 48%);
+}
+.group:focus-visible .card-img {
+  scale: 1.05;
+}
+@media (hover: hover) {
+  .group:hover .card-img {
+    scale: 1.05;
   }
-  to {
-    transform: translateY(0);
+}
+.card-focus {
+  border-radius: var(--radius-port);
+}
+.card-focus:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+[data-drift] {
+  will-change: transform;
+}
+
+/* ---- rails: start on the page margin, run off the right edge */
+.rail {
+  --edge: max(1rem, calc((100% - 1440px) / 2 + 1rem));
+  position: relative;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding-inline: var(--edge);
+  scroll-padding-inline: var(--edge);
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  cursor: grab;
+}
+.rail::-webkit-scrollbar {
+  display: none;
+}
+.rail[data-dragging] {
+  cursor: grabbing;
+  user-select: none;
+}
+.rail[data-dragging] a {
+  pointer-events: none;
+}
+.rail:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 6px;
+}
+@media (min-width: 768px) {
+  .rail {
+    --edge: max(3rem, calc((100% - 1440px) / 2 + 3rem));
   }
 }
-.fade-in {
-  animation: fade-in 1.4s ease both;
-  animation-delay: var(--d, 0s);
-}
-@keyframes fade-in {
-  from {
+
+/* ---- FAQ opens smoothly where the browser can animate to an automatic height */
+@supports (interpolate-size: allow-keywords) {
+  .faq {
+    interpolate-size: allow-keywords;
+  }
+  .faq::details-content {
+    height: 0;
+    overflow: clip;
     opacity: 0;
+    transition:
+      height 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+      opacity 0.4s ease,
+      content-visibility 0.5s allow-discrete;
   }
-  to {
+  .faq[open]::details-content {
+    height: auto;
     opacity: 1;
   }
 }
-.settle {
-  animation: settle 2.6s cubic-bezier(0.19, 1, 0.22, 1) both;
-}
-@keyframes settle {
-  from {
-    transform: scale(1.18);
-    filter: brightness(0.6);
-  }
-  to {
-    transform: scale(1);
-    filter: brightness(1);
-  }
-}
-
-/* Underlined form fields */
-.field {
-  width: 100%;
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid rgb(255 255 255 / 0.22);
-  padding: 0.9rem 0;
-  color: white;
-  font-size: 0.95rem;
-  outline: none;
-  transition: border-color 0.4s ease;
-}
-.field::placeholder {
-  color: rgb(255 255 255 / 0.45);
-}
-.field:focus {
-  border-color: var(--color-gold);
-}
 
 @media (prefers-reduced-motion: reduce) {
-  .rise > span,
-  .fade-in,
-  .settle {
-    animation: none;
+  .card-img,
+  .faq::details-content {
+    transition: none;
   }
 }
+

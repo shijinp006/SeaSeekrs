@@ -1,83 +1,124 @@
-import Photo from "@/components/Photo";
-import { comforts, features, moments } from "@/lib/content";
+import Image from "next/image";
+import Frame from "@/components/Frame";
+import Gallery from "@/components/Gallery";
+import { Check } from "@/components/Icons";
+import { bookOnWhatsApp, comforts, onBoardPhotos, why, yachts, yachtsIntro } from "@/lib/content";
+import { BTN_GOLD } from "@/lib/motion";
 
-export function Features() {
+export function Yachts() {
   return (
-    <section className="bg-paper py-24 md:py-40">
-      <div className="container-x space-y-28 md:space-y-44">
-        {features.map((f, i) => {
-          const flip = i % 2 === 1;
-          return (
-            <div key={f.title} className="grid items-center gap-10 md:grid-cols-12 md:gap-8 lg:gap-6">
-              <div className={`md:col-span-6 lg:col-span-4 ${flip ? "md:order-2 lg:col-start-8" : "lg:col-start-2"}`}>
-                <p data-reveal className="kicker text-muted">
-                  {String(i + 1).padStart(2, "0")} — {f.kicker}
-                </p>
-                <h3 data-reveal data-delay="0.1" className="serif mt-6 text-4xl leading-[1.1] lg:text-5xl">
-                  {f.title}
-                </h3>
-                <div data-reveal data-delay="0.15" className="mt-8 h-px w-16 bg-ink/25" />
-                <p data-reveal data-delay="0.2" className="mt-8 max-w-sm leading-relaxed text-muted">
-                  {f.body}
-                </p>
+    <section id="yachts" data-tone="foam" className="py-[clamp(4rem,7.5vw,7.5rem)]">
+      <div className="container-x">
+        <div className="grid items-end gap-x-12 gap-y-6 lg:grid-cols-12">
+          <h2 data-lines className="display t-section lg:col-span-8">
+            {yachtsIntro.title.join(" ")}
+          </h2>
+          <p data-aos="fade-left" className="max-w-md t-lead text-(--mute) lg:col-span-4">
+            {yachtsIntro.body}
+          </p>
+        </div>
+
+        {yachts.map((y, i) => (
+          <article key={y.title} className="mt-[clamp(3.5rem,6vw,6rem)]">
+            <div className="grid gap-x-12 gap-y-10 lg:grid-cols-12">
+              <div className={`lg:col-span-8 ${i % 2 ? "lg:order-2" : ""}`}>
+                <Gallery aos={i % 2 ? "fade-left" : "fade-right"} name={y.title} photos={[y.src, ...y.gallery]} />
               </div>
-              <div className={`md:col-span-6 lg:col-span-5 ${flip ? "md:order-1 lg:col-start-2" : "lg:col-start-7"}`}>
-                <Photo
-                  src={f.src}
-                  alt={f.title}
-                  className={`${f.dark ? "aspect-square shadow-[0_40px_80px_-30px_rgba(7,18,31,0.6)]" : "aspect-[4/5]"}`}
-                />
+              <div className="flex flex-col justify-between gap-8 lg:col-span-4">
+                <div>
+                  <h3 data-lines className="display t-title">
+                    {y.title}
+                  </h3>
+                  <p data-aos="fade-up" className="mt-3 text-(--accent)">
+                    {y.kicker}
+                  </p>
+                  <div data-aos="fade-up" className="mt-5 space-y-3 leading-relaxed text-(--mute)">
+                    {y.body.map((p) => (
+                      <p key={p}>{p}</p>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <dl data-aos="fade-up" className="grid grid-cols-2 gap-x-6 border-t border-(--rule)">
+                    {y.specs.map(([k, v]) => (
+                      <div key={k} className="border-b border-(--rule) py-3">
+                        <dt className="text-[0.8125rem] text-(--mute)">{k}</dt>
+                        <dd className="mt-0.5">{v}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                  <div data-aos="fade-up" className="mt-7 flex flex-wrap items-center justify-between gap-x-6 gap-y-5">
+                    <p>
+                      <span className="display block text-[1.9rem]">{y.daily}</span>
+                      <span className="text-(--mute)">a day, or {y.hourly}</span>
+                    </p>
+                    <a href={bookOnWhatsApp(y.title)} target="_blank" rel="noopener noreferrer" className={BTN_GOLD}>
+                      Book now
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
 
-export function Comforts() {
-  return (
-    <section className="bg-paper pb-28 md:pb-44">
-      <div className="container-x">
-        <div className="text-center">
-          <p data-reveal className="kicker text-muted">
-            On board
-          </p>
-          <h2 data-reveal data-delay="0.1" className="serif mt-6 text-5xl leading-[1.05] md:text-7xl">
-            Every comfort,
-            <br />
-            considered
-          </h2>
-        </div>
-
-        <div className="mt-16 grid auto-rows-[52vw] grid-cols-2 gap-3 md:mt-24 md:auto-rows-[23vw] md:grid-cols-12 md:gap-4 lg:auto-rows-[17vw] 2xl:auto-rows-[15rem]">
-          {comforts.map((c) => (
-            <Photo key={c.label} src={c.src} alt={c.label} className={c.cls} sizes="(min-width: 768px) 33vw, 50vw">
-              <span className="kicker absolute bottom-4 left-4 text-white drop-shadow">{c.label}</span>
-            </Photo>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-export function Moments() {
-  return (
-    <section className="overflow-hidden bg-paper pb-28 md:pb-44">
-      <div className="container-x text-center">
-        <h2 data-reveal className="serif text-5xl md:text-7xl">
-          Moments aboard
-        </h2>
-        <p data-reveal data-delay="0.1" className="mx-auto mt-6 max-w-md text-muted">
-          Sunrise swims, long lunches, a sky full of stars. The days you came for.
-        </p>
-      </div>
-      <div data-drift="18" className="mt-16 flex w-max items-start gap-4 pl-4 md:mt-24 md:gap-6 md:pl-[12vw]">
-        {moments.map((m) => (
-          <Photo key={m.src} src={m.src} alt={m.alt} className={`shrink-0 ${m.cls}`} sizes="(min-width: 768px) 32vw, 74vw" />
+            <div className="mt-12 grid gap-x-12 gap-y-10 border-t border-(--rule) pt-10 lg:grid-cols-12">
+              <div data-aos="fade-up" className="lg:col-span-8">
+                <h4 className="font-serif text-xl">Features</h4>
+                <ul className="mt-5 grid gap-x-8 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {y.features.map((f) => (
+                    <li key={f} className="flex gap-3 leading-snug">
+                      <Check className="mt-0.5 size-4 shrink-0 text-(--accent)" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div data-aos="fade-up" data-aos-delay="80" className="lg:col-span-4">
+                <h4 className="font-serif text-xl">Addons</h4>
+                <ul className="mt-5 flex flex-wrap gap-2">
+                  {y.addons.map((f) => (
+                    <li key={f} className="rounded-full border border-(--rule) px-3.5 py-1.5 text-[0.85rem]">
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </article>
         ))}
+      </div>
+    </section>
+  );
+}
+
+export function OnBoard() {
+  const [salon, cabin] = onBoardPhotos;
+  const size = "h-[clamp(15rem,44vw,40rem)]";
+  return (
+    <section data-tone="deep" className="py-[clamp(4rem,7.5vw,7.5rem)]">
+      <div className="container-x">
+        <div className="grid items-end gap-x-12 gap-y-6 lg:grid-cols-12">
+          <h2 data-lines className="display t-section lg:col-span-8">
+            {why.title.join(" ")}
+          </h2>
+          <p data-aos="fade-left" className="max-w-md t-lead text-(--mute) lg:col-span-4">
+            {why.body}
+          </p>
+        </div>
+        <div className="mt-10 grid grid-cols-[1.75fr_1fr] gap-3 md:mt-16 md:gap-5">
+          <Frame src={salon.src} alt={salon.alt} sizes="64vw" aos="fade-right" className={size} />
+          <Frame src={cabin.src} alt={cabin.alt} sizes="36vw" aos="fade-left" delay={120} className={size} />
+        </div>
+        <ul className="mt-12 grid gap-x-12 gap-y-9 sm:grid-cols-2 md:mt-16 lg:grid-cols-3">
+          {comforts.map((c, i) => (
+            <li key={c.label} data-aos="fade-up" data-aos-delay={(i % 3) * 100} className="flex items-start gap-5">
+              <Image src={c.icon} alt="" width={48} height={48} className="size-10 shrink-0" />
+              <div>
+                <h3 className="font-serif text-[1.2rem] leading-tight">{c.label}</h3>
+                <p className="mt-1.5 leading-relaxed text-(--mute)">{c.body}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );

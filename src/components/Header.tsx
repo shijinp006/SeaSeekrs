@@ -1,11 +1,17 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
+import { company } from "@/lib/content";
+import { BTN } from "@/lib/motion";
 
 const links = [
-  { href: "#fleet", label: "Fleet" },
-  { href: "#experience", label: "Experience" },
-  { href: "#charter", label: "Charter" },
+  { href: "#about", label: "About" },
+  { href: "#tours", label: "Tours" },
+  { href: "#yachts", label: "Yachts" },
+  { href: "#reviews", label: "Reviews" },
+  { href: "#faq", label: "FAQ" },
+  { href: "#contact", label: "Contact" },
 ];
 
 /** Tells MotionRoot to pause / resume smooth scrolling while the menu covers the page. */
@@ -16,15 +22,34 @@ const setScrollLocked = (locked: boolean) => {
 
 export default function Header() {
   const [open, setOpen] = useState(false);
-  // Transparent over the hero; frosted glass with a border once the page below it reaches the top
+  // Clear over the hero and the full-screen pictures; frosted glass in the page's own tone elsewhere
   const [glass, setGlass] = useState(false);
+  // Steps aside while reading on, comes back at the first scroll up
+  const [away, setAway] = useState(false);
 
   useEffect(() => {
     let raf = 0;
+    let turn = window.scrollY; // where the scroll last changed direction
+    let last = turn;
+    let down = false;
     const check = () => {
       raf = 0;
       const after = document.querySelector("[data-after-hero]");
-      setGlass(after ? after.getBoundingClientRect().top <= 72 : window.scrollY > 40);
+      const past = after ? after.getBoundingClientRect().top <= 72 : window.scrollY > 40;
+      const over = [...document.querySelectorAll("[data-over]")].some((el) => {
+        const r = el.getBoundingClientRect();
+        return r.top <= 40 && r.bottom > 40;
+      });
+      setGlass(past && !over);
+
+      const y = window.scrollY;
+      if (y !== last && y > last !== down) {
+        down = y > last;
+        turn = last;
+      }
+      last = y;
+      if (!past) setAway(false);
+      else if (Math.abs(y - turn) > 60) setAway(down);
     };
     const onScroll = () => {
       if (!raf) raf = requestAnimationFrame(check);
@@ -89,7 +114,7 @@ export default function Header() {
                     }`}
                   >
                     <span className="kicker text-white/40">0{i + 1}</span>
-                    <span className="serif text-[clamp(2.75rem,12vw,5.5rem)] leading-[1.05] transition-colors group-hover:text-gold">
+                    <span className="serif text-[clamp(2rem,min(10vw,7svh),4.5rem)] leading-[1.05] transition-colors group-hover:text-gold">
                       {l.label}
                     </span>
                   </a>
@@ -105,15 +130,15 @@ export default function Header() {
             }`}
           >
             <div className="space-y-1 text-sm text-white/60">
-              <p>hello@seaseekers.com</p>
-              <p>+377 00 00 00 00 · Port Hercule, Monaco</p>
+              <p>{company.email}</p>
+              <p>{company.mobile.label} · Dubai UAE</p>
             </div>
             <a
-              href="#inquire"
+              href="#contact"
               onClick={close}
-              className="kicker self-start rounded-full bg-gold px-10 py-4 font-medium text-navy-deep sm:self-auto"
+              className={`self-start bg-gold px-10 py-4 font-medium text-navy-deep hover:bg-[#e0c07d] sm:self-auto ${BTN}`}
             >
-              Plan your charter
+              Book now
             </a>
           </div>
         </div>
@@ -121,26 +146,30 @@ export default function Header() {
 
       {/* Top bar */}
       <div
-        className={`fade-in relative border-b transition-[background-color,color,border-color,box-shadow,backdrop-filter] duration-500 ${
+        className={`relative border-b transition-[translate,border-color,background-color] duration-500 ease-out ${
           solid
-            ? "border-ink/10 bg-paper/65 text-ink shadow-[0_10px_30px_-18px_rgba(7,18,31,0.35)] backdrop-blur-xl backdrop-saturate-150"
+            ? "border-(--rule) bg-[color-mix(in_srgb,var(--bg)_86%,transparent)] text-(--fg) backdrop-blur-md"
             : "border-transparent text-white"
-        }`}
-        style={{ ["--d" as string]: "1.2s" }}
+        } ${away && !open ? "-translate-y-full focus-within:translate-y-0" : ""}`}
       >
         <div
           className={`container-x flex items-center justify-between transition-[padding] duration-500 ${
-            solid ? "py-3.5 md:py-4" : "py-5 md:py-7"
+            solid ? "py-2" : "py-3 md:py-4"
           }`}
         >
-          <a href="#top" onClick={close} className="serif text-xl tracking-wide md:text-2xl">
-            SeaSeekers
+          <a href="#top" onClick={close} className="shrink-0 cursor-pointer transition-opacity duration-300 hover:opacity-80">
+            <Image
+              {...company.logo}
+              alt={`${company.name} Leisure Yachts & Boats Rental`}
+              preload
+              className={`w-auto transition-[height,filter] duration-500 ${solid ? "h-11 md:h-12" : "h-14 brightness-150 md:h-[4.5rem]"}`}
+            />
           </a>
           <nav className="flex items-center gap-6 sm:gap-8">
             <ul className="hidden items-center gap-8 lg:flex">
               {links.map((l) => (
                 <li key={l.href}>
-                  <a href={l.href} className="kicker opacity-80 transition-opacity hover:opacity-100">
+                  <a href={l.href} className="relative cursor-pointer py-2 text-[0.95rem] after:absolute after:inset-x-0 after:bottom-0 after:h-px after:origin-left after:scale-x-0 after:bg-gold after:transition-[scale] after:duration-500 hover:after:scale-x-100">
                     {l.label}
                   </a>
                 </li>

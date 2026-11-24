@@ -1,18 +1,17 @@
 // All site copy and imagery in one place — swap photos or text here.
-// Photos: Unsplash (free licence). Replace with your own by changing the id or the full URL.
+// Copy and photos come from seaseakersyachts.com. Photos are optimised into public/site with
+//   node scripts/export-site-images.mjs
 
-export const img = (id: string, w = 2000) =>
-  id.startsWith("/") || id.startsWith("http")
-    ? id
-    : `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=80`;
+const photo = (name: string) => `/site/${name}.webp`;
 
 /**
- * Hero film: one continuous drone shot (yacht at anchor → stern → over the pool → into the salon),
- * exported from source-media/gemini_generated_video_29cd02c9.mp4 (kept out of public/ so it
- * isn't deployed) as 240 watermark-free WebP frames.
- * Re-export after replacing the video (run from the public folder, in = ../source-media/<file>.mp4):
- *   ffmpeg -i in.mp4 -an -vf "delogo=x=1128:y=568:w=64:h=64" -c:v libwebp -quality 60 hero/lg/%03d.webp
- *   ffmpeg -i in.mp4 -an -vf "delogo=x=1128:y=568:w=64:h=64,scale=854:-2" -c:v libwebp -quality 56 hero/sm/%03d.webp
+ * Hero film: one continuous drone shot (yacht at anchor → stern → over the teak deck → into the salon),
+ * exported from source-media/hero-yacht-2026-11-24.mp4 (kept out of public/
+ * so it isn't deployed): 240 full-HD frames as H.264 for the hardware decoder (film.bin), plus AVIF / WebP stills for
+ * browsers without WebCodecs.
+ * Re-export after replacing the video:
+ *   node scripts/export-hero.mjs source-media/<file>.mp4
+ *   node scripts/export-hero-film.mjs source-media/<file>.mp4
  * Caption `from` / `to` are fractions of the whole scroll.
  */
 export const heroFilm = {
@@ -25,81 +24,200 @@ export const heroFilm = {
   ] as { lines: [string, string]; from: number; to: number }[],
 };
 
-export const stats = [
-  { value: 120, suffix: "", label: "Yachts in our fleet" },
-  { value: 38, suffix: "", label: "Destinations charted" },
-  { value: 25, suffix: "", label: "Years at sea" },
-  { value: 100, suffix: "%", label: "Bespoke itineraries" },
-];
-
-export const crew = {
-  src: img("1528154291023-a6525fabe5b4", 1600),
-  alt: "Yacht seen from directly above on deep teal water",
-  title: ["Crewed to perfection,", "tailored to you."],
-  body: "Captain, chef, stewardess and deckhands — every SeaSeekers crew is hand-picked for discretion and warmth, and briefed on you before you step aboard.",
+export const company = {
+  name: "Sea Seakers",
+  logo: { src: photo("logo"), width: 522, height: 466 },
+  legal: "SEA SEAKERS LEISURE YACHTS & BOATS RENTAL L.L.C",
+  address: "Al fahidhi plaza, office no 89, Dubai UAE",
+  email: "seaseakersyachts@gmail.com",
+  mobile: { label: "+971 529236730", href: "tel:+971529236730" },
+  phone: { label: "+971 44497276", href: "tel:+97144497276" },
+  whatsapp: "https://api.whatsapp.com/send/?phone=971529236730",
+  instagram: "https://www.instagram.com/seaseakers_yachts/",
+  youtube: "https://youtube.com/shorts/SMyJu4zUGAA?feature=share",
+  trustpilot: "https://www.trustpilot.com/review/seaseakersyachts.com",
+  google: "https://g.page/r/CQzjF1DzyMvuEAI/review",
+  legalLinks: [
+    { label: "Payment & Cancellation Policy", href: "https://seaseakersyachts.com/refund-cancellation-policy/" },
+    { label: "Privacy Policy", href: "https://seaseakersyachts.com/privacy-policy/" },
+    { label: "Terms And Conditions", href: "https://seaseakersyachts.com/terms-and-conditions/" },
+  ],
 };
 
-export const fleet = [
-  { name: "Serenissima", spec: "54m · 12 guests · 6 cabins", src: img("1605281317010-fe5ffe798166", 1600) },
-  { name: "Aurelia", spec: "38m sailing · 8 guests · 4 cabins", src: img("1540946485063-a40da27545f8", 1600) },
-  { name: "Borealis", spec: "46m · 10 guests · 5 cabins", src: img("1534447677768-be436bb09401", 1600) },
-  { name: "Lumière", spec: "62m · 12 guests · 7 cabins", src: img("1562281302-809108fd533c", 1600) },
+/** Prefilled WhatsApp chat, used by every "Book now" */
+export const bookOnWhatsApp = (what: string) =>
+  `${company.whatsapp}&text=${encodeURIComponent(`Hello Sea Seakers, I would like to book: ${what}`)}`;
+
+export const welcome = {
+  kicker: "Most affordable yacht rental service in Dubai",
+  lines: ["Luxury awaits.", "Your yacht adventure"] as [string, string],
+  accent: "begins.",
+  body: "Embark on your dream yacht adventure in Dubai. Experience luxury, breathtaking views, and unforgettable moments. Your journey begins here.",
+};
+
+// Facts from the yachts below, shown beside the welcome
+export const included = [
+  ["From", "350 AED an hour"],
+  ["Crew", "Experienced captain and crew"],
+  ["On board", "Fuel, soft drinks, ice and towels included"],
+] as const;
+
+export const servicesIntro = { title: "Five ways to spend a day at sea" };
+
+export const services = [
+  { src: photo("why"), alt: "A sailing yacht under way", title: "Sailing", body: "Sail Dubai's waters in affordable luxury with Sea Seakers. Iconic landmarks, serene seas, and memorable moments await. Book today!" },
+  { src: photo("y48-3"), alt: "Cushioned seating on the flybridge of the 48 ft yacht", title: "Yacht Club", body: "Join our Yacht Club for exclusive access to luxury yachting experiences in Dubai. Membership has its privileges. Set sail today!" },
+  { src: photo("service-diving"), alt: "Clear turquoise water over a reef", title: "Diving", body: "Dive into the depths of Dubai's underwater wonders with Sea Seakers. Explore marine life and shipwrecks on your diving adventure." },
+  { src: photo("y31-main"), alt: "The 31 ft fishing boat at sea", title: "Fishing", body: "Experience thrilling fishing expeditions in Dubai with Sea Seakers. Cast your line and reel in unforgettable moments on the water." },
+  { src: photo("y48-5"), alt: "The bow of the yacht heading for the Ain Dubai wheel", title: "Tour", body: "Embark on an unforgettable Dubai tour with Sea Seakers. Explore the city's beauty and history from the unique perspective of the sea." },
+];
+
+export const about = {
+  src: photo("about-aerial"),
+  alt: "Luxury yacht seen from the air on turquoise water",
+  title: ["Your gateway to luxury", "yacht charters in Dubai."],
+  body: [
+    "Sea Seakers Yachts and Boat Rental, located in the heart of Dubai, is your gateway to luxury yacht charters in Dubai. We are one of the leading charter companies in Dubai to own its own fleet of yachts. Our vision is to provide unrivaled experiences at sea, and our journey began with a deep passion for the ocean.",
+    "Our dedicated crew members ensure impeccable service, and we take you to stunning destinations in the Arabian Gulf, all while committing to sustainable yachting practices.",
+    "Discover the epitome of luxury and embark on a voyage of a lifetime with Sea Seakers Yachts and Boat Rental. With a meticulously maintained fleet of elegant yachts, Sea Seakers is the best place for a yacht for rent in Dubai.",
+  ],
+  portrait: { src: photo("y48-4"), alt: "Sea Seakers cushions at the helm, off Dubai" },
+  inset: { src: photo("y48-1"), alt: "The sundeck of the 48 ft yacht off Dubai Marina" },
+};
+
+export const toursIntro = {
+  title: "Dubai, seen from the water",
+  body: "Explore the stunning coastline and iconic landmarks in style. Create lasting memories with us.",
+};
+
+// From day to night. `focus`: the point kept in view where a narrow screen crops the picture
+export const tours = [
+  { name: "Burj Al Arab", src: photo("tour-burj"), focus: "72% 60%" },
+  { name: "Atlantis", src: photo("tour-atlantis"), focus: "44% 75%" },
+  { name: "Lagoon", src: photo("tour-lagoon"), focus: "45% 45%" },
+  { name: "Skyline", src: photo("tour-skyline"), focus: "54% 55%" },
+  { name: "Harbour", src: photo("tour-harbour"), focus: "72% 50%" },
+  { name: "Ain Wheel", src: photo("tour-ain"), focus: "56% 35%" },
+];
+
+export const yachtsIntro = {
+  title: ["Discover the perfect yacht,", "tailored to your unforgettable journey."],
+  body: "Tailor your Dubai yacht adventure with personalized luxury. Our yachts, your dreams, creating memories that last a lifetime.",
+};
+
+export const yachts = [
+  {
+    kicker: "Sea Ray (USA made) — Yacht charter in Dubai",
+    title: "48 ft Yacht Sea Seakers 3",
+    body: [
+      "Powered by two 580 HP engines, equipped. The boat can host up to 11 guests with two crew members and one captain. Discover the ultimate blend of luxury and excitement aboard Outlaw, a premium yacht available for rental.",
+      "This well-appointed yacht boasts two ample cabins, providing comfortable accommodation for up to four guests.",
+    ],
+    specs: [
+      ["Build", "SEA RAY (USA-MADE)"],
+      ["Length", "14.6304m (48 ft)"],
+      ["Capacity", "18"],
+      ["Overnight guests", "4"],
+    ],
+    daily: "5500 AED",
+    hourly: "550 AED/Hr",
+    features: [
+      "Private, fully equipped boat", "Maximum 11 guests per trip", "Experienced captain & crew", "Two cabins & bath",
+      "Sundeck & salon", "Food not included", "Necessary safety equipment", "Boats are commercial, legal & insured",
+      "Music speakers", "Water, soft drinks, icebox", "Towels", "Fuel",
+    ],
+    addons: ["Professional photographer", "Meal", "Pre-wedding shoot", "Party / celebration", "Rooms", "Honeymoon", "Jet ski"],
+    src: photo("y48-main"),
+    gallery: [photo("y48-1"), photo("y48-3"), photo("y48-4"), photo("y48-5")],
+  },
+  {
+    kicker: "Boat rental in Dubai",
+    title: "31 ft Yacht Sea Seakers 1",
+    body: [
+      "Powered by two 200 HP engines, equipped with all fishing and safety equipment. The boat can host up to 10 guests with two crew members.",
+    ],
+    specs: [
+      ["Build", "Fishing Charter"],
+      ["Length", "9.4488m (31 ft)"],
+      ["Capacity", "10"],
+      ["Overnight guests", "2"],
+    ],
+    daily: "3500 AED",
+    hourly: "350 AED/Hour",
+    features: [
+      "Private, fully equipped boat", "Maximum 10 guests per trip", "Experienced captain & crew", "One cabin", "Salon",
+      "Air conditioning & music speakers", "All necessary fishing equipment", "Water, soft drinks, icebox", "Towels", "Fuel",
+      "Food not included", "Necessary safety equipment", "Boats are commercial, legal & insured",
+    ],
+    addons: ["Professional photographer", "Meal", "Pre-wedding shoot", "Rooms", "Honeymoon"],
+    src: photo("y31-main"),
+    gallery: [photo("y31-1"), photo("y31-2"), photo("y31-3"), photo("y31-4")],
+  },
 ];
 
 export const bow = {
-  src: img("1523496922380-91d5afba98a3", 2400),
-  alt: "A yacht's bow from directly above, cutting through teal water",
-  lines: ["The world,", "at your bow."] as [string, string],
+  src: photo("cta-yacht"),
+  alt: "A luxury yacht cruising offshore",
+  lines: ["Discover the", "ultimate yachting", "experience today!"],
+  body: "Set sail into luxury with us and experience Dubai like never before. Unforgettable yacht journeys await. Book now to discover the ultimate yachting experience.",
+  cta: "Contact us now!",
 };
 
-export const features = [
-  {
-    kicker: "Cuisine",
-    title: "Dine beyond expectation",
-    body: "Private chefs source from the harbours you visit — a seven-course tasting at anchor, or grilled fish on the swim platform at noon.",
-    src: img("1414235077428-338989a2e8c0", 1600),
-    dark: false,
-  },
-  {
-    kicker: "Staterooms",
-    title: "Suites that rival the shore",
-    body: "Full-beam master suites, panoramic glazing and linens turned down twice a day. Every cabin is a quiet room with a moving view.",
-    src: img("1590490360182-c33d57733427", 1600),
-    dark: false,
-  },
-  {
-    kicker: "Water toys",
-    title: "The whole sea to play in",
-    body: "Tenders, jet skis, seabobs, paddleboards and dive kit — with a crew that knows exactly which cove is calm this afternoon.",
-    src: img("1593351415075-3bac9f45c877", 1600),
-    dark: true,
-  },
+export const why = {
+  title: ["Experience yachting excellence,", "choose us for unforgettable adventures."],
+  body: "Indulge in elegance with Sea Seakers, where luxury meets affordability on Dubai's waters. Create lasting memories against the backdrop of stunning views. Your extraordinary yachting journey begins now.",
+};
+
+export const onBoardPhotos = [
+  { src: photo("about-5"), alt: "The salon, with its long leather sofa" },
+  { src: photo("about-2"), alt: "A cabin with a made-up double bed" },
 ];
 
 export const comforts = [
-  { label: "The Bridge", src: img("1600607687939-ce8a6c25118c", 1200), cls: "md:col-span-4 md:row-span-2" },
-  { label: "The Salon", src: img("1600210492486-724fe5c67fb0", 1200), cls: "md:col-span-3" },
-  { label: "The Spa", src: img("1584132967334-10e028bd69f7", 1200), cls: "md:col-span-5" },
-  { label: "The Cabin", src: img("1611892440504-42a792e24d32", 1200), cls: "md:col-span-5" },
-  { label: "The Deck", src: img("1566073771259-6a8506099945", 1200), cls: "md:col-span-3" },
-  { label: "The View", src: img("1602002418082-a4443e081dd1", 1200), cls: "md:col-span-4" },
+  { label: "Luxury bathroom", body: "Enjoy lavish sea-view bathrooms.", icon: photo("icon-bath") },
+  { label: "Luxury bed", body: "Plush beds ensure restful nights at sea.", icon: photo("icon-bed") },
+  { label: "Speaker", body: "Entertainment at its finest onboard.", icon: photo("icon-speaker") },
+  { label: "Air conditioner", body: "Stay cool throughout your journey.", icon: photo("icon-ac") },
+  { label: "Microwave", body: "Delight in three daily gourmet meals.", icon: photo("icon-microwave") },
+  { label: "Safe storage", body: "Secure storage for peace of mind.", icon: photo("icon-safe") },
 ];
 
-export const moments = [
-  { src: img("1476673160081-cf065607f449", 1200), alt: "Sunrise over a quiet beach", cls: "aspect-[3/4] w-[62vw] md:w-[36vw] lg:w-[24vw]" },
-  { src: img("1544551763-46a013bb70d5", 1200), alt: "Diving among a school of fish", cls: "aspect-[4/3] w-[72vw] md:w-[45vw] lg:w-[30vw] md:mt-24" },
-  { src: img("1517248135467-4c7edcad34c4", 1200), alt: "Candle-lit evening dining room", cls: "aspect-[4/5] w-[60vw] md:w-[33vw] lg:w-[22vw]" },
-  { src: img("1500930287596-c1ecaa373bb2", 1200), alt: "Pink sunset over water villas", cls: "aspect-[16/11] w-[74vw] md:w-[48vw] lg:w-[32vw] md:mt-16" },
-  { src: img("1530053969600-caed2596d242", 1200), alt: "Light falling through clear blue water", cls: "aspect-[3/4] w-[60vw] md:w-[33vw] lg:w-[22vw]" },
+// Shown beside the reviews, in the same order
+export const guests = [
+  { src: photo("guest-1"), alt: "Guests on deck in front of the Dubai skyline" },
+  { src: photo("guest-2"), alt: "A family gathered on board" },
+  { src: photo("guest-3"), alt: "Guests on board with the Burj Al Arab behind them" },
+  { src: photo("guest-4"), alt: "Guests at the rail of the yacht" },
 ];
 
-export const steps = [
-  { n: "01", title: "Tell us your vision", body: "Dates, guests, the feeling you are after. A short call is all we need to begin." },
-  { n: "02", title: "We curate the match", body: "A shortlist of yachts, crews and routes — each chosen for you, never off a list." },
-  { n: "03", title: "Step aboard", body: "Contracts, provisioning and berths handled. You simply arrive and cast off." },
+export const reviews = [
+  { who: "Jitesh Agarwal", quote: "Booked sea seekers , it was an amazing experience with a 2 hour hatch ride around marina and palm. The staff were very cooperative and provided very good customer service 👍👍" },
+  { who: "Jackie Carroll", quote: "We did a sunset cruise with Captain Nobi and crew. The yacht was beautiful and the cruise was spectacular. Thank you for taking such good care of us. I would highly recommend. We will definitely do a day cruise with swimming when we are back in Dubai." },
+  { who: "Amit Karmakar", quote: "It was awesome trip to yacht ride special thanks to Mr Nobi the man who gide me very well..it way a happy journey....😀" },
+  { who: "Srinivasan Venkataraman", quote: "We went on a tour in Dubai Marina in your yacht. Had a wonderful experience. The tour started and ended on time, and your staff (the yacht operator) Mr.Nobi was very polite, professional, and helpful. Happy with your company's service and will definitely recommend to my friends." },
 ];
 
-export const testimonial = {
-  quote: "SeaSeekers didn't charter us a yacht. They composed a week we still talk about years later.",
-  who: "The Laurent family · Côte d'Azur, 2025",
+export const shortReviews = [
+  { who: "Majo Rodríguez", date: "February 14, 2024", quote: "Very good prices and services" },
+  { who: "Ankit singhal", date: "February 6, 2024", quote: "Had an amazing experience. Staff was very supportive and friendly." },
+  { who: "Saish Sankhe", date: "February 21, 2024", quote: "Great experience ….. must visit" },
+  { who: "Divya Patel", date: "February 14, 2024", quote: "Very nice experience, team members are so supportive they also take our good photos, will definitely recommend to my friends and family for sure.." },
+  { who: "Kyungpyo k", date: "February 21, 2024", quote: "It’s a nice experience👍👍👍" },
+  { who: "Yasser Salem", date: "February 28, 2024", quote: "It’s good person Nobi and we enjoy with him thanks" },
+];
+
+export const faq = {
+  title: ["FAQs: Navigating your", "yacht journey with ease"],
+  body: "Unlock answers to your questions and embark on a smooth sailing adventure with our comprehensive FAQ guide. Your voyage awaits!",
+  items: [
+    { q: "What is a yacht charter?", a: "A yacht charter is the rental of a yacht for a specific period. It allows you to enjoy the luxury and freedom of a private yacht for various activities, from leisurely cruises to special events." },
+    { q: "How do I book a yacht with Sea Seakers Yachts?", a: "Booking is simple! Contact us through our website or directly, and our team will assist you in checking availability, providing pricing, and making reservations." },
+    { q: "What types of yachts do you offer, and can they accommodate various group sizes?", a: "We offer a range of yachts to suit various group sizes and preferences. Our fleet includes luxury yachts suitable for intimate gatherings, as well as larger yachts for hosting events and parties. Please contact us for specific details on the available options." },
+    { q: "Can I bring my own food and drinks?", a: "We offer catering services, but you're welcome to discuss bringing your own provisions with our team, considering any relevant guidelines." },
+    { q: "What is included in the yacht rental packages, and are there any additional costs to consider?", a: "Our yacht rental packages typically include the yacht itself, a professional crew, fuel, and standard amenities. Additional services such as catering, water sports equipment, and customizations are available for an extra fee. Please refer to our pricing page or get in touch for a comprehensive breakdown of costs." },
+    { q: "How experienced is your crew, and what safety measures are in place during the yacht excursions?", a: "Our crew members are highly experienced and trained to ensure your safety and enjoyment. We prioritize safety measures, including life jackets, first aid equipment, and adherence to maritime regulations, to make your yacht excursion secure and worry-free." },
+    { q: "Can we customize our yacht trip, including routes, catering, and onboard services?", a: "Yes, we offer the flexibility to customize your yacht trip. You can choose your preferred route, catering options, and onboard services such as DJs, photographers, or water sports activities. Contact our team to discuss your specific requirements and preferences." },
+    { q: "What is your cancellation and rescheduling policy in case of unforeseen changes in plans or weather conditions?", a: "Our cancellation and rescheduling policies may vary depending on the circumstances and the booking terms. We understand that plans can change due to weather or unforeseen events, and we aim to accommodate such situations as best as possible. Please review our terms and conditions or reach out to us for specific information regarding cancellations and rescheduling." },
+    { q: "Are children and pets allowed on board?", a: "Children are generally welcome, but age restrictions may apply. Please check with us regarding pets, as policies can vary." },
+  ],
 };

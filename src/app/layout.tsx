@@ -12,9 +12,9 @@ const bodoni = Bodoni_Moda({
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "SeaSeekers — Private Yacht Charters",
+  title: "Best Yacht Rental in Dubai — Sea Seakers Leisure Yachts & Boats Rental",
   description:
-    "Every horizon, privately yours. Crewed luxury yacht charters across the Mediterranean, the Caribbean and the Indian Ocean.",
+    "Welcome to Sea Seakers, where luxury meets affordability on Dubai's waters. Explore the stunning coastline and iconic landmarks in style.",
 };
 
 export const viewport: Viewport = {

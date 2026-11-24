@@ -1,112 +1,200 @@
-import Image from "next/image";
-import Photo from "@/components/Photo";
-import { bow, crew, fleet, stats } from "@/lib/content";
+import Frame from "@/components/Frame";
+import { CardArrow } from "@/components/Icons";
+import Rail from "@/components/Rail";
+import {
+  about,
+  bookOnWhatsApp,
+  company,
+  included,
+  services,
+  servicesIntro,
+  tours,
+  toursIntro,
+  welcome,
+} from "@/lib/content";
+import { BTN_GOLD, LINK } from "@/lib/motion";
 
-export function Stats() {
+const out = { target: "_blank", rel: "noopener noreferrer" } as const;
+
+export function Welcome() {
   return (
-    <section className="relative z-10 bg-paper py-28 md:py-44">
-      <div className="container-x text-center">
-        <p data-reveal className="kicker text-muted">
-          SeaSeekers · Since 2001
-        </p>
-        <h2 data-reveal data-delay="0.1" className="serif mx-auto mt-6 max-w-4xl text-5xl leading-[1.05] md:text-7xl">
-          The art of being
-          <br />
-          <em className="italic">perfectly</em> at sea.
-        </h2>
-        <div data-reveal data-delay="0.2" className="mx-auto mt-10 h-px w-24 bg-ink/25" />
-        <p data-reveal data-delay="0.25" className="mx-auto mt-10 max-w-xl text-[0.95rem] leading-relaxed text-muted">
-          For a quarter of a century we have matched discerning travellers with the right yacht, the right crew and
-          the right stretch of water — quietly, precisely, and always around you.
-        </p>
-
-        <dl className="mx-auto mt-20 grid max-w-5xl grid-cols-2 gap-y-14 md:mt-28 md:grid-cols-4">
-          {stats.map((s, i) => (
-            <div key={s.label} data-reveal data-delay={String(0.1 * i)} className="flex flex-col items-center">
-              <dt className="serif flex items-start text-6xl md:text-7xl">
-                <span data-count={s.value}>{s.value}</span>
-                {s.suffix && <span className="ml-1 mt-2 text-2xl">{s.suffix}</span>}
-              </dt>
-              <dd className="kicker mt-4 text-muted">{s.label}</dd>
-            </div>
-          ))}
-        </dl>
-      </div>
-    </section>
-  );
-}
-
-export function Crew() {
-  return (
-    <section id="experience" className="bg-paper py-24 md:py-40">
-      <div className="container-x grid items-center gap-12 md:grid-cols-12 md:gap-6">
-        <Photo src={crew.src} alt={crew.alt} className="aspect-[4/5] md:col-span-6 md:aspect-[5/6]" />
-        <div className="md:col-span-6 md:col-start-7 lg:col-span-5 lg:col-start-8">
-          <p data-reveal className="kicker text-muted">
-            The crew
-          </p>
-          <h2 data-reveal data-delay="0.1" className="serif mt-6 text-4xl leading-[1.1] md:text-5xl xl:text-6xl">
-            {crew.title[0]}
-            <br />
-            {crew.title[1]}
-          </h2>
-          <p data-reveal data-delay="0.2" className="mt-8 max-w-md leading-relaxed text-muted">
-            {crew.body}
-          </p>
-          <a data-reveal data-delay="0.3" href="#inquire" className="kicker mt-10 inline-block border-b border-ink/40 pb-1 hover:border-ink">
-            Meet your crew
-          </a>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-export function Fleet() {
-  return (
-    <section id="fleet" className="bg-paper pb-28 md:pb-44">
+    <section data-tone="foam" className="min-h-[100svh] pb-[clamp(4rem,7vw,7rem)] pt-[clamp(6rem,9.5vw,9rem)]">
       <div className="container-x">
-        <div className="text-center">
-          <p data-reveal className="kicker text-muted">
-            The fleet
-          </p>
-          <h2 data-reveal data-delay="0.1" className="serif mt-6 text-5xl md:text-7xl">
-            Vessels of distinction
-          </h2>
-          <p data-reveal data-delay="0.2" className="mx-auto mt-6 max-w-lg text-muted">
-            A private collection of motor and sailing yachts, each inspected by us every season.
-          </p>
-        </div>
-
-        <div className="mt-16 grid gap-x-6 gap-y-16 md:mt-24 md:grid-cols-2 md:gap-y-24">
-          {fleet.map((y, i) => (
-            <article key={y.name} className={i % 2 ? "md:mt-24" : ""}>
-              <Photo src={y.src} alt={`${y.name} yacht`} className="aspect-[4/3]" />
-              <div data-reveal className="mt-6 flex flex-col gap-2 border-b border-line pb-5 sm:flex-row sm:items-baseline sm:justify-between md:flex-col md:items-start lg:flex-row lg:items-baseline">
-                <h3 className="serif text-3xl">{y.name}</h3>
-                <p className="kicker text-muted">{y.spec}</p>
+        <h2 data-lines className="display t-hero">
+          {welcome.lines[0]}
+          <br /> {welcome.lines[1]} {welcome.accent}
+        </h2>
+        <div className="mt-[clamp(2rem,3.5vw,3.5rem)] grid gap-x-12 gap-y-10 lg:grid-cols-12">
+          <Frame
+            src={about.src}
+            alt={about.alt}
+            sizes="(min-width: 1024px) 66vw, 100vw"
+            aos="fade-right"
+            className="aspect-[4/3] sm:aspect-[16/10] lg:col-span-8"
+          />
+          <div className="flex flex-col justify-between gap-10 lg:col-span-4">
+            <div>
+              <p data-aos="fade-left" className="t-lead [text-wrap:pretty]">
+                {welcome.body}
+              </p>
+              <div data-aos="fade-left" data-aos-delay="120" className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-5">
+                <a href="#yachts" className={BTN_GOLD}>
+                  See the yachts
+                </a>
+                <a href={company.whatsapp} {...out} className={LINK}>
+                  Ask on WhatsApp
+                </a>
               </div>
-            </article>
-          ))}
+            </div>
+            <dl>
+              {included.map(([k, v], i) => (
+                <div key={k} data-aos="fade-up" data-aos-delay={i * 110} className="border-t border-(--rule) py-4 last:pb-0">
+                  <dt className="text-[0.8125rem] text-(--mute)">{k}</dt>
+                  <dd className="mt-0.5 font-serif text-[1.125rem] leading-snug">{v}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-export function Bow() {
+export function About() {
   return (
-    <section className="relative h-[130svh] overflow-hidden bg-teal text-white">
-      <div data-parallax="8" className="absolute inset-[-12%_0]">
-        <Image src={bow.src} alt={bow.alt} fill sizes="100vw" className="object-cover" />
+    <section id="about" data-tone="foam" className="py-[clamp(4rem,8vw,8rem)]">
+      <div className="container-x grid gap-x-12 gap-y-12 lg:grid-cols-12">
+        <div className="lg:col-span-7">
+          <h2 data-lines className="display t-section">
+            {about.title.join(" ")}
+          </h2>
+          <p data-aos="fade-up" className="mt-6 max-w-[38em] t-lead [text-wrap:pretty]">
+            {about.body[0]}
+          </p>
+          <div className="mt-6 grid max-w-[46rem] gap-8 leading-relaxed text-(--mute) sm:grid-cols-2">
+            <p data-aos="fade-up">{about.body[1]}</p>
+            <p data-aos="fade-up" data-aos-delay="80">
+              {about.body[2]}
+            </p>
+          </div>
+        </div>
+        {/* two photos from on board, one lapping over the other */}
+        <div className="relative pb-[22%] lg:col-span-5">
+          <Frame
+            src={about.portrait.src}
+            alt={about.portrait.alt}
+            sizes="(min-width: 1024px) 34vw, 80vw"
+            aos="fade-left"
+            className="ml-auto aspect-[4/5] w-[84%]"
+          />
+          <div className="absolute bottom-0 left-0 w-[58%] rounded-[calc(var(--radius-port)+0.5rem)] bg-(--bg) p-2 md:p-3">
+            <Frame
+              src={about.inset.src}
+              alt={about.inset.alt}
+              sizes="(min-width: 1024px) 24vw, 56vw"
+              aos="zoom-in"
+              delay={250}
+              className="aspect-[3/2]"
+            />
+          </div>
+        </div>
       </div>
-      <div className="absolute inset-0 bg-gradient-to-b from-teal/45 via-teal/10 to-black/35" />
-      <div className="relative flex h-full items-center justify-center px-4 text-center">
-        <h2 data-reveal className="serif text-[clamp(2.75rem,min(11vw,13svh),7rem)] leading-[1.05]">
-          {bow.lines[0]}
-          <br />
-          {bow.lines[1]}
-        </h2>
+    </section>
+  );
+}
+
+export function Services() {
+  return (
+    <section data-tone="foam" className="overflow-x-clip pb-[clamp(4rem,7.5vw,7.5rem)] pt-[clamp(4rem,6vw,6rem)]">
+      <Rail
+        label={servicesIntro.title}
+        head={
+          <h2 data-lines className="display max-w-[12em] t-section">
+            {servicesIntro.title}
+          </h2>
+        }
+      >
+        {services.map((s, i) => (
+          <li key={s.title} className="w-[78vw] max-w-[25rem] shrink-0 snap-start sm:w-[46vw] lg:w-[29vw]">
+            <a href={bookOnWhatsApp(s.title)} {...out} className="group card-focus block">
+              <Frame
+                src={s.src}
+                alt={s.alt}
+                delay={Math.min(i, 3) * 120}
+                sizes="(min-width: 1024px) 54vw, (min-width: 640px) 90vw, 150vw"
+                className="aspect-[3/4] text-white"
+              >
+                <span className="card-shade absolute inset-0" />
+                <span className="absolute inset-x-6 bottom-6 flex items-end justify-between gap-4 md:inset-x-7 md:bottom-7">
+                  <h3 className="display t-title">{s.title}</h3>
+                  <CardArrow />
+                </span>
+              </Frame>
+              <p className="mt-5 pr-4 leading-relaxed text-(--mute)">{s.body}</p>
+            </a>
+          </li>
+        ))}
+      </Rail>
+    </section>
+  );
+}
+
+// Where each landmark hangs on the wall (wide screens), from morning at the Burj to night at the wheel
+const wall = [
+  "col-span-2 aspect-[4/3] lg:col-span-7 lg:row-span-2 lg:aspect-auto",
+  "aspect-[3/4] lg:col-span-5 lg:aspect-auto",
+  "aspect-[3/4] lg:col-span-5 lg:aspect-auto",
+  "col-span-2 aspect-[4/3] lg:col-span-12 lg:row-span-2 lg:aspect-auto",
+  "aspect-[3/4] lg:col-span-5 lg:row-span-2 lg:aspect-auto",
+  "aspect-[3/4] lg:col-span-7 lg:row-span-2 lg:aspect-auto",
+];
+// …and the side it comes in from
+const wallAos = ["fade-right", "fade-left", "fade-left", "zoom-in", "fade-right", "fade-left"] as const;
+const wallSizes = ["58vw", "42vw", "42vw", "100vw", "42vw", "58vw"];
+
+export function Tours() {
+  return (
+    <section id="tours" data-tone="deep" className="py-[clamp(4rem,7.5vw,7.5rem)]">
+      <div className="container-x">
+        <div className="grid items-end gap-x-12 gap-y-6 lg:grid-cols-12">
+          <h2 data-lines className="display t-section lg:col-span-7">
+            {toursIntro.title}
+          </h2>
+          <p data-aos="fade-left" className="max-w-md t-lead text-(--mute) lg:col-span-5">
+            {toursIntro.body}
+          </p>
+        </div>
+        <ul className="mt-10 grid grid-cols-2 gap-3 md:mt-16 md:gap-5 lg:auto-rows-[clamp(13rem,20vw,19rem)] lg:grid-cols-12">
+          {tours.map((t, i) => (
+            <li key={t.name} className={wall[i]}>
+              <a href={bookOnWhatsApp(`${t.name} tour`)} {...out} className="group card-focus block h-full">
+                <Frame
+                  src={t.src}
+                  alt={`${t.name}, Dubai`}
+                  focus={t.focus}
+                  aos={wallAos[i]}
+                  delay={i === 2 ? 140 : 0}
+                  sizes={`(min-width: 1024px) ${wallSizes[i]}, 100vw`}
+                  className="h-full text-white"
+                >
+                  <span className="card-shade absolute inset-0" />
+                  <span className="absolute inset-x-4 bottom-4 flex items-end justify-between gap-4 md:inset-x-8 md:bottom-7">
+                    <span className="block">
+                      <h3 className={`display ${i === 1 || i === 2 ? "t-card" : "t-title"}`}>
+                        {t.name}
+                      </h3>
+                      <span className="mt-1.5 block text-[0.8125rem] text-white/85">Book this tour</span>
+                    </span>
+                    <span className="max-sm:hidden">
+                      <CardArrow />
+                    </span>
+                  </span>
+                </Frame>
+              </a>
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );
