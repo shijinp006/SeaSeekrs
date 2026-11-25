@@ -42,3 +42,12 @@ next-env.d.ts
 
 # raw source videos (hero frames are exported to public/hero)
 /source-media/
+/public/*.mp4
+
+# SEO studio
+!.env.example
+/uploads/
+/src/generated/
+
+# database dumps
+/backups/

@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
+import { siteUrl } from "@/lib/server/site";
 import { Bodoni_Moda, Inter } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/Header";
+
 
 const bodoni = Bodoni_Moda({
   subsets: ["latin"],
@@ -12,9 +13,8 @@ const bodoni = Bodoni_Moda({
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Best Yacht Rental in Dubai — Sea Seakers Leisure Yachts & Boats Rental",
-  description:
-    "Welcome to Sea Seakers, where luxury meets affordability on Dubai's waters. Explore the stunning coastline and iconic landmarks in style.",
+  metadataBase: new URL(siteUrl()),
+  title: "Sea Seakers",
 };
 
 export const viewport: Viewport = {
@@ -25,11 +25,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" className={`${bodoni.variable} ${inter.variable}`}>
       <head>
-        {/* Runs before the browser restores the old scroll position, so reloads open at the hero */}
-        <script dangerouslySetInnerHTML={{ __html: "history.scrollRestoration='manual'" }} />
+        {/* On the home page: runs before the browser restores the old scroll position, so reloads open at the hero */}
+        <script dangerouslySetInnerHTML={{ __html: "if(location.pathname==='/')history.scrollRestoration='manual'" }} />
       </head>
       <body suppressHydrationWarning>
-        <Header />
         {children}
       </body>
     </html>

@@ -6,7 +6,7 @@ import sharp from "sharp";
 
 const BOX = { left: 1680, top: 840, width: 120, height: 120 }; // for a 1920×1080 source
 const N = BOX.width;
-const ALPHA = 0.295, WHITE = 260; // fitted over all frames of the video
+const ALPHA = 0.29, WHITE = 255; // ALPHA differs a little from frame to frame: see strength()
 
 const shape = await sharp(fileURLToPath(new URL("./hero-mark.png", import.meta.url)))
   .extractChannel(0)
@@ -28,12 +28,38 @@ for (let y = 4; y < N - 4; y++) {
   }
 }
 
+// thin bands just inside and just outside the star
+const isOn = (x, y) => x >= 0 && y >= 0 && x < N && y < N && marked[y * N + x] === 1;
+const near = (x, y, r, on) => {
+  for (let v = -r; v <= r; v++) for (let u = -r; u <= r; u++) if (u * u + v * v <= r * r && isOn(x + u, y + v) === on) return true;
+  return false;
+};
+const inner = [], outer = [];
+for (let y = 8; y < N - 8; y++) {
+  for (let x = 8; x < N - 8; x++) {
+    const on = isOn(x, y);
+    if (near(x, y, 7, !on) && !near(x, y, 3, !on)) (on ? inner : outer).push(y * N + x);
+  }
+}
+/** How strong the star is in this frame: what makes the picture inside it match the picture around it */
+const strength = (patch) => {
+  let top = ALPHA * 12000, bottom = 12000; // leans to the usual strength where the picture is too bright to tell
+  for (let c = 0; c < 3; c++) {
+    const mean = (list) => list.reduce((sum, i) => sum + patch[i * 3 + c], 0) / list.length;
+    const i = mean(inner), o = mean(outer);
+    top += (i - o) * (WHITE - o);
+    bottom += (WHITE - o) ** 2;
+  }
+  return Math.min(0.34, Math.max(0.2, top / bottom));
+};
+
 /** Path of a frame → sharp image of it without the mark */
 export async function withoutMark(file) {
   const patch = await sharp(file).extract(BOX).removeAlpha().raw().toBuffer();
   const p = Float64Array.from(patch);
+  const alpha = strength(patch);
   for (let i = 0; i < N * N; i++) {
-    if (marked[i]) for (let c = 0; c < 3; c++) p[i * 3 + c] = (patch[i * 3 + c] - ALPHA * WHITE) / (1 - ALPHA);
+    if (marked[i]) for (let c = 0; c < 3; c++) p[i * 3 + c] = (patch[i * 3 + c] - alpha * WHITE) / (1 - alpha);
   }
   for (let c = 0; c < 3; c++) {
     for (let pass = 0; pass < 120; pass++) {

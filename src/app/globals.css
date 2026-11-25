@@ -137,13 +137,21 @@ button:disabled,
   font-size: 0.9375rem;
 }
 .t-hero {
-  font-size: clamp(2.15rem, 4.3vw, 4.1rem);
+  font-size: calc(clamp(2.15rem, 4.3vw, 4.1rem) * var(--h-scale, 1)); /* --h-scale: the size chosen in the SEO studio */
   line-height: 1.06;
 }
 .t-section {
-  font-size: clamp(1.85rem, 3vw, 2.85rem);
+  font-size: calc(clamp(1.85rem, 3vw, 2.85rem) * var(--h-scale, 1));
   line-height: 1.1;
   letter-spacing: -0.018em;
+}
+/* highlighted words after a heading */
+.heading-mark {
+  color: var(--accent);
+}
+.stage-words .heading-mark,
+.text-white .heading-mark {
+  color: var(--color-gold);
 }
 .t-title {
   font-size: clamp(1.5rem, 2.1vw, 2.05rem);
@@ -192,6 +200,99 @@ button:disabled,
 }
 [data-drift] {
   will-change: transform;
+}
+
+/* ---- stages (lib/stages): first only a picture; with the scroll it changes size and the words come.
+   Without room or with reduced motion a stage is a plain section, with everything in its place. */
+.stage-view {
+  position: relative;
+  display: flex;
+  min-height: 100svh;
+  overflow: clip;
+}
+.stage-pic {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.stage-shade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to top, rgb(4 22 30 / 0.86), rgb(4 22 30 / 0.5) 45%, rgb(4 22 30 / 0.12) 80%),
+    linear-gradient(to right, rgb(4 22 30 / 0.35), transparent 60%);
+}
+.stage-shade-bow {
+  background: linear-gradient(to bottom, rgb(4 22 30 / 0.6), rgb(4 22 30 / 0.05) 45%, rgb(4 22 30 / 0.1) 60%, rgb(4 22 30 / 0.85));
+}
+@media (max-width: 767px) {
+  .stage-shade-bow {
+    background: linear-gradient(to bottom, rgb(4 22 30 / 0.65), rgb(4 22 30 / 0.1) 42%, rgb(4 22 30 / 0.72) 64%, rgb(4 22 30 / 0.95));
+  }
+}
+.stage-words {
+  position: relative;
+  padding-top: 6rem;
+  padding-bottom: calc(clamp(2rem, 4.5vw, 4.5rem) + 100lvh - 100svh);
+}
+@media (min-height: 600px) and (prefers-reduced-motion: no-preference) {
+  .stage[data-stage="open"] {
+    height: 235lvh;
+  }
+  .stage[data-stage="open"] > .stage-view {
+    position: sticky;
+    top: 0;
+    height: 100lvh;
+  }
+}
+@media (min-width: 1024px) and (min-height: 680px) and (prefers-reduced-motion: no-preference) {
+  .stage[data-stage="aside"] {
+    height: 205vh;
+  }
+  .stage[data-stage="aside"] > .stage-view {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    align-items: center;
+  }
+}
+.stage-cover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+/* a row of cards that runs sideways while the page is scrolled down */
+.stage[data-stage="rail"] > .stage-view {
+  display: block;
+  min-height: 0;
+  overflow: visible;
+}
+@media (min-width: 1024px) and (min-height: 680px) and (prefers-reduced-motion: no-preference) {
+  .stage[data-stage="rail"] {
+    height: 215vh;
+  }
+  .stage[data-stage="rail"] > .stage-view {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-block: 4.5rem 1.5rem;
+  }
+  .stage[data-stage="rail"] .rail {
+    margin-top: 2rem;
+    scroll-snap-type: none;
+  }
+  .stage[data-stage="rail"] .rail-card {
+    width: 36vw;
+    max-width: none;
+  }
+  .stage[data-stage="rail"] .rail-pic {
+    aspect-ratio: auto;
+    height: 52vh;
+  }
 }
 
 /* ---- rails: start on the page margin, run off the right edge */
@@ -253,3 +354,54 @@ button:disabled,
   }
 }
 
+/* ---- the text of a blog post */
+.prose-sea {
+  font-size: 1.0625rem;
+  line-height: 1.75;
+}
+.prose-sea > * + * {
+  margin-top: 1.35em;
+}
+.prose-sea :is(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--font-serif);
+  line-height: 1.2;
+}
+.prose-sea h1 {
+  margin-top: 2em;
+  font-size: 2.1rem;
+}
+.prose-sea h2 {
+  margin-top: 2em;
+  font-size: 1.75rem;
+}
+.prose-sea :is(h4, h5, h6) {
+  margin-top: 1.4em;
+  font-size: 1.1rem;
+}
+.prose-sea h3 {
+  margin-top: 1.6em;
+  font-size: 1.3rem;
+}
+.prose-sea a {
+  color: var(--accent, #08757a);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.prose-sea ul,
+.prose-sea ol {
+  padding-left: 1.4em;
+  list-style: disc;
+}
+.prose-sea ol {
+  list-style: decimal;
+}
+.prose-sea blockquote {
+  font-family: var(--font-serif);
+  font-size: 1.3rem;
+  line-height: 1.5;
+}
+.prose-sea img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-port);
+}

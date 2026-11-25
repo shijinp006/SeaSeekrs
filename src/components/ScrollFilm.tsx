@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -11,6 +11,8 @@ export type FilmCaption = { lines: [string, string]; from: number; to: number };
 type Props = {
   /** Number of frames. Each folder holds them as film.bin + film.json, and as stills 001.avif / 001.webp … */
   frames: number;
+  /** The frame to show at even steps of the scroll, first to last: more scroll where the camera is fast */
+  pace: number[];
   /** Folder with full 16:9 frames, and one with a 3:4 centre crop for portrait phones */
   src: { lg: string; sm: string };
   captions: FilmCaption[];
@@ -26,6 +28,9 @@ type FilmIndex = { codec: string; width: number; height: number; gop: number; or
 
 const pad = (n: number) => String(n).padStart(3, "0");
 
+/** The stills are every second frame: STEP in scripts/export-hero.mjs */
+const STILLS = 2;
+
 /** Screens no wider than the 3:4 crop, so it covers them at full source height */
 const PORTRAIT = "(max-width: 767px) and (max-aspect-ratio: 3/4)";
 
@@ -34,7 +39,12 @@ const PORTRAIT = "(max-width: 767px) and (max-aspect-ratio: 3/4)";
  * iOS too, unlike seeking a <video>). The frames come from the device's video decoder through WebCodecs, which costs
  * next to no processor time; browsers without it get the same film as still pictures.
  */
-export default function ScrollFilm({ frames, src, captions, intro, length = 6, overlap = false }: Props) {
+export default function ScrollFilm({ frames, pace: givenPace, src, captions: given, intro, length = 6, overlap = false }: Props) {
+  // the same values in a new array are no reason to take the pin down and put it up again
+  const paceKey = givenPace.join();
+  const pace = useMemo(() => paceKey.split(",").map(Number), [paceKey]);
+  const key = JSON.stringify(given);
+  const captions = useMemo(() => JSON.parse(key) as FilmCaption[], [key]);
   const root = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const hasIntro = Boolean(intro);
@@ -43,7 +53,7 @@ export default function ScrollFilm({ frames, src, captions, intro, length = 6, o
     const el = root.current;
     const canvas = canvasRef.current;
     if (!el || !canvas) return;
-    const ctx2d = canvas.getContext("2d");
+    const ctx2d = canvas.getContext("2d"); // see-through until the first frame, so the poster shows
     if (!ctx2d) return;
 
     const portrait = window.matchMedia(PORTRAIT);
@@ -57,11 +67,13 @@ export default function ScrollFilm({ frames, src, captions, intro, length = 6, o
     let aborter = new AbortController();
     let ext = "avif";
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const net = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+    const thrifty = Boolean(net?.saveData || (net?.effectiveType && net.effectiveType !== "4g")); // a few stills will do
 
     // ---- drawing: cover-fit like object-fit: cover, at most once per screen refresh.
     // A frame lasts some 20px of scroll, which shows as steps when scrolling slowly. So while the film moves
     // slowly the next frame fades in over this one; at rest it always settles on one clean frame.
-    const playhead = { f: 0 };
+    const playhead = { at: 0, f: 0 }; // how far through the scroll, and the frame that belongs there
     let dirty = true;
     let lastF = 0;
     let rest = 1; // 0 while moving → 1 once still
@@ -79,13 +91,13 @@ export default function ScrollFilm({ frames, src, captions, intro, length = 6, o
       const cw = canvas.width, ch = canvas.height;
       const s = Math.max(cw / img.width, ch / img.height);
       const w = img.width * s, h = img.height * s;
+      ctx2d.imageSmoothingQuality = s < 0.75 ? "high" : "low"; // near its own size the cheap way looks the same
       ctx2d.globalAlpha = alpha;
-      ctx2d.drawImage(img, (cw - w) / 2, (ch - h) / 2, w, h);
+      ctx2d.drawImage(img, Math.round((cw - w) / 2), Math.round((ch - h) / 2), w, h);
     };
     const paint = () => {
       dirty = false;
-      ctx2d.imageSmoothingEnabled = true;
-      ctx2d.imageSmoothingQuality = "high"; // resizing the canvas resets it
+      ctx2d.imageSmoothingEnabled = true; // resizing the canvas resets it
       const i = Math.floor(playhead.f);
       const a = bitmaps.get(i), b = bitmaps.get(i + 1);
       const part = playhead.f - i;
@@ -104,15 +116,21 @@ export default function ScrollFilm({ frames, src, captions, intro, length = 6, o
     const draw = () => {
       dirty = true;
     };
+    let slowFor = 0;
     let stride = 1; // decode every frame, or while rushing through only every 2nd or 4th
     const tick = (_time: number, delta: number) => {
       const speed = Math.abs(playhead.f - lastF);
       lastF = playhead.f;
-      const step = speed > 3 ? 4 : speed > 1.4 ? 2 : 1;
-      if (step !== stride) {
+      const step = speed > 2.6 ? 4 : speed > 1.1 ? 2 : 1;
+      if (step >= stride) slowFor = 0;
+      else slowFor += delta;
+      // not back and forth while the speed wavers
+      if (step > stride || slowFor > 160) {
         stride = step;
+        slowFor = 0;
         pump();
       }
+      copySome(Math.ceil(speed) + 1);
       const was = rest;
       // quick moves need no in-between pictures; they would only blur
       if (speed > 1.2) rest = 1;
@@ -124,7 +142,7 @@ export default function ScrollFilm({ frames, src, captions, intro, length = 6, o
     gsap.ticker.add(tick);
 
     // ---- decoding: a window of frames around the playhead is kept decoded, mostly ahead of it
-    const AHEAD = 16, BEHIND = 8;
+    const AHEAD = 11, BEHIND = 4;
     const DECODERS = Math.min(4, Math.max(2, (navigator.hardwareConcurrency || 4) >> 1)); // leave room for the page itself
     const inWindow = (i: number, slack = 0) => {
       const d = (i - current) * heading;
@@ -136,7 +154,9 @@ export default function ScrollFilm({ frames, src, captions, intro, length = 6, o
     let gop = 4;
     let config: VideoDecoderConfig;
     let decoder: VideoDecoder | null = null;
-    let pending: Promise<void>[] = [];
+    let waiting: VideoFrame[] = []; // decoded, not yet copied
+    let allCopied: (() => void) | null = null;
+    let copying = 0;
     let working = false;
     let failures = 0;
     let made = 0; // frames the decoder has handed back
@@ -148,19 +168,47 @@ export default function ScrollFilm({ frames, src, captions, intro, length = 6, o
           made++;
           const i = Math.round(frame.timestamp / 1000);
           if (id !== batch || bitmaps.has(i) || !(inWindow(i, gop) || !bitmaps.size)) return frame.close();
-          const copy = createImageBitmap(frame)
-            .then((img) => {
-              if (id !== batch || bitmaps.has(i)) return img.close();
-              bitmaps.set(i, img);
-              draw();
-            })
-            .finally(() => frame.close());
-          pending.push(copy);
+          waiting.push(frame);
         },
         error: () => {}, // flush() rejects as well
       });
       decoder.configure(config);
       return decoder;
+    };
+    /**
+     * Copies decoded frames for drawing, a few per screen refresh: a whole group at once makes the graphics chip miss
+     * a refresh, which shows as a small hitch every few frames.
+     */
+    const copySome = (most: number) => {
+      if (!bitmaps.has(current)) most = waiting.length; // nothing to show yet: hurry
+      while (most > 0 && waiting.length) {
+        const frame = waiting.shift()!;
+        const id = batch, i = Math.round(frame.timestamp / 1000);
+        if (i % stride && i !== frames - 1 && bitmaps.size) {
+          frame.close(); // rushing past: decoded only for the sake of the next one
+          if (!waiting.length && !copying) allCopied?.();
+          continue;
+        }
+        most--;
+        copying++;
+        createImageBitmap(frame)
+          .then((img) => {
+            if (id !== batch || bitmaps.has(i)) return img.close();
+            bitmaps.set(i, img);
+            draw();
+          })
+          .catch(() => {})
+          .finally(() => {
+            frame.close();
+            copying--;
+            if (!copying && !waiting.length) allCopied?.();
+          });
+      }
+    };
+    const dropWaiting = () => {
+      waiting.forEach((frame) => frame.close());
+      waiting = [];
+      if (!copying) allCopied?.();
     };
     /** The next group worth decoding, and how many of its frames */
     const nextGroup = (): [number, number] | null => {
@@ -174,7 +222,11 @@ export default function ScrollFilm({ frames, src, captions, intro, length = 6, o
           let n = 0;
           while (n < gop && units[g * gop + n]) n++;
           if (stride > 2) n = Math.min(n, 1); // rushing through: key frames will do
-          for (let k = 0; k < n; k++) if (inWindow(g * gop + k) && !bitmaps.has(g * gop + k)) return [g, n];
+          for (let k = 0; k < n; k++) {
+            const i = g * gop + k;
+            if (i % stride && i !== frames - 1 && bitmaps.size) continue;
+            if (inWindow(i) && !bitmaps.has(i)) return [g, n];
+          }
         }
       }
       // not downloaded yet: the nearest key frame there is stands in
@@ -200,13 +252,13 @@ export default function ScrollFilm({ frames, src, captions, intro, length = 6, o
           }
           await dec.flush();
           if (!made) throw new Error("no picture");
-          await Promise.all(pending);
-          pending = [];
+          if (waiting.length || copying) await new Promise<void>((done) => (allCopied = done));
+          allCopied = null;
           if (id === batch && failures && bitmaps.size) failures = 0;
         }
       } catch {
-        pending = [];
         if (id === batch && ++failures > 3) {
+          dropWaiting();
           units = null; // this device's decoder won't have it
           loadStills();
         }
@@ -261,6 +313,7 @@ export default function ScrollFilm({ frames, src, captions, intro, length = 6, o
     // ---- loading the film: its pieces arrive coarse to fine, and play as they come
     const load = async () => {
       const id = ++batch;
+      dropWaiting();
       aborter.abort();
       aborter = new AbortController();
       const { signal } = aborter;
@@ -268,7 +321,7 @@ export default function ScrollFilm({ frames, src, captions, intro, length = 6, o
       decoder = null;
       units = null;
       failures = 0;
-      if (reduce || !("VideoDecoder" in window)) return loadStills();
+      if (reduce || thrifty || !("VideoDecoder" in window)) return loadStills();
       try {
         const dir = portrait.matches ? src.sm : src.lg;
         const index: FilmIndex = await fetch(`${dir}/film.json`, { signal }).then((r) => r.json());
@@ -276,7 +329,7 @@ export default function ScrollFilm({ frames, src, captions, intro, length = 6, o
         const { supported } = await VideoDecoder.isConfigSupported(config);
         if (id !== batch) return;
         if (!supported || index.order.length !== frames) return loadStills();
-        const body = (await fetch(`${dir}/film.bin`, { signal })).body!.getReader();
+        const body = (await fetch(`${dir}/film.bin`, { signal, priority: "low" })).body!.getReader();
         if (id !== batch) return;
         bitmaps.forEach((img) => img.close());
         bitmaps = new Map();
@@ -310,7 +363,8 @@ export default function ScrollFilm({ frames, src, captions, intro, length = 6, o
     // ---- loading the stills: first frame (settles AVIF or WebP), then a coarse pass (every 8th), then fill in the gaps
     const order: number[] = [];
     for (let i = 8; i < frames; i += 8) order.push(i);
-    for (let i = 1; i < frames; i++) if (i % 8) order.push(i);
+    if (!thrifty) for (let i = STILLS; i < frames; i += STILLS) if (i % 8) order.push(i);
+    if ((frames - 1) % STILLS) order.push(frames - 1);
     const loadStills = async () => {
       const id = ++batch;
       aborter.abort();
@@ -360,8 +414,17 @@ export default function ScrollFilm({ frames, src, captions, intro, length = 6, o
       };
       for (let c = 0; c < 6; c++) lane();
     };
-    load();
-    portrait.addEventListener("change", load);
+    // The poster is the first frame, so the film can wait until everything the page opens with is there, or until it is
+    // scrolled to
+    const START = ["load", "wheel", "touchstart", "keydown", "scroll"] as const;
+    const forgetStart = () => START.forEach((e) => window.removeEventListener(e, start));
+    const start = () => {
+      forgetStart();
+      load();
+      portrait.addEventListener("change", load);
+    };
+    if (document.readyState === "complete") start();
+    else START.forEach((e) => window.addEventListener(e, start, { passive: true }));
 
     size();
     const ro = new ResizeObserver(size);
@@ -374,7 +437,9 @@ export default function ScrollFilm({ frames, src, captions, intro, length = 6, o
     });
     io.observe(el);
     const stop = () => {
+      forgetStart();
       batch++;
+      dropWaiting();
       aborter.abort();
       if (decoder && decoder.state !== "closed") decoder.close();
       gsap.ticker.remove(tick);
@@ -406,6 +471,7 @@ export default function ScrollFilm({ frames, src, captions, intro, length = 6, o
           pin: true,
           scrub: true, // Lenis already eases the scroll; easing the film again on top would make it trail behind
           anticipatePin: 1,
+          refreshPriority: 1, // measured before everything below it, whenever it was made
           invalidateOnRefresh: true,
         },
       });
@@ -414,9 +480,12 @@ export default function ScrollFilm({ frames, src, captions, intro, length = 6, o
       tl.to(
         playhead,
         {
-          f: frames - 1,
+          at: 1,
           duration: total,
           onUpdate: () => {
+            const step = playhead.at * (pace.length - 1);
+            const n = Math.min(pace.length - 2, Math.floor(step));
+            playhead.f = pace[n] + (pace[n + 1] - pace[n]) * (step - n);
             const i = Math.round(playhead.f);
             if (i !== current) {
               heading = i > current ? 1 : -1;
@@ -443,24 +512,25 @@ export default function ScrollFilm({ frames, src, captions, intro, length = 6, o
       stop();
       gctx.revert();
     };
-  }, [frames, src.lg, src.sm, captions, hasIntro, length, overlap]);
+  }, [frames, pace, src.lg, src.sm, captions, hasIntro, length, overlap]);
 
   return (
-    // React-owned wrapper keeps GSAP's pin-spacer DOM move invisible to React
-    <div>
+    // React-owned wrapper keeps GSAP's pin-spacer DOM move invisible to React. It is as tall as the pin will make it from the
+    // start, or the next section would cover the hero until the scripts have run. Without scripts or motion nothing is pinned.
+    <div style={{ "--film": `${(1 + length + (overlap ? 1 : 0)) * 100}svh` } as React.CSSProperties} className="min-h-(--film) motion-reduce:min-h-0 noscript:min-h-0">
       <section ref={root} className="relative h-[100svh] overflow-hidden bg-navy-deep text-white">
         {/* poster until the first frame is decoded */}
         <picture>
           <source media={PORTRAIT} type="image/avif" srcSet={`${src.sm}/001.avif`} />
           <source media={PORTRAIT} srcSet={`${src.sm}/001.webp`} />
           <source type="image/avif" srcSet={`${src.lg}/001.avif`} />
-          <img src={`${src.lg}/001.webp`} alt="" className="absolute inset-0 h-full w-full object-cover" />
+          <img src={`${src.lg}/001.webp`} alt="" fetchPriority="high" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
         </picture>
         <canvas
           ref={canvasRef}
           className="absolute inset-0 h-full w-full"
           role="img"
-          aria-label="Camera flies toward a superyacht at anchor, over its aft deck and into the main salon"
+          aria-label="Camera flies toward a yacht at anchor off Dubai, over its aft deck and into the main salon"
         />
         {/* just enough shade for the menu and the words; the picture itself stays clear */}
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,rgb(0_0_0/0.45),transparent_24%,transparent_58%,rgb(0_0_0/0.5))]" />
@@ -473,11 +543,11 @@ export default function ScrollFilm({ frames, src, captions, intro, length = 6, o
             className="sf-cap pointer-events-none absolute inset-0 flex items-center justify-center bg-[radial-gradient(ellipse_55%_38%_at_center,rgb(4_22_30/0.5),transparent)] px-4 text-center"
             style={{ opacity: 0 }}
           >
-            <h2 className="serif text-[clamp(2.4rem,min(9.5vw,11svh),5.75rem)] leading-[1.05] [text-shadow:0_2px_30px_rgb(0_0_0/0.45)]">
+            <p className="serif text-[clamp(2.4rem,min(9.5vw,11svh),5.75rem)] leading-[1.05] [text-shadow:0_2px_30px_rgb(0_0_0/0.45)]">
               {c.lines[0]}
               <br />
               {c.lines[1]}
-            </h2>
+            </p>
           </div>
         ))}
       </section>

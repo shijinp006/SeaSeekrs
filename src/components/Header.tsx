@@ -5,22 +5,30 @@ import { useEffect, useState } from "react";
 import { company } from "@/lib/content";
 import { BTN } from "@/lib/motion";
 
-const links = [
-  { href: "#about", label: "About" },
-  { href: "#tours", label: "Tours" },
-  { href: "#yachts", label: "Yachts" },
-  { href: "#reviews", label: "Reviews" },
-  { href: "#faq", label: "FAQ" },
-  { href: "#contact", label: "Contact" },
-];
-
 /** Tells MotionRoot to pause / resume smooth scrolling while the menu covers the page. */
 const setScrollLocked = (locked: boolean) => {
   document.documentElement.style.overflow = locked ? "hidden" : "";
   window.dispatchEvent(new CustomEvent("seaseekers:scroll-lock", { detail: locked }));
 };
 
-export default function Header() {
+export default function Header({
+  links: items,
+  cta,
+  email,
+  mobile,
+  logoAlt,
+  home = true,
+}: {
+  links: { href: string; label: string }[];
+  cta: string;
+  email: string;
+  mobile: string;
+  logoAlt: string;
+  /** on the home page, where #links stay on the page */
+  home?: boolean;
+}) {
+  const at = (href: string) => (!home && href.startsWith("#") ? `/${href}` : href);
+  const links = items.map((l) => ({ ...l, href: at(l.href) }));
   const [open, setOpen] = useState(false);
   // Clear over the hero and the full-screen pictures; frosted glass in the page's own tone elsewhere
   const [glass, setGlass] = useState(false);
@@ -104,7 +112,7 @@ export default function Header() {
           <nav aria-label="Menu">
             <ul className="space-y-2 sm:space-y-4">
               {links.map((l, i) => (
-                <li key={l.href} className="overflow-hidden">
+                <li key={i} className="overflow-hidden">
                   <a
                     href={l.href}
                     onClick={close}
@@ -129,16 +137,16 @@ export default function Header() {
               open ? "opacity-100" : "opacity-0"
             }`}
           >
-            <div className="space-y-1 text-sm text-white/60">
-              <p>{company.email}</p>
-              <p>{company.mobile.label} · Dubai UAE</p>
-            </div>
+            <address className="space-y-1 text-sm not-italic text-white/60">
+              <p>{email}</p>
+              <p>{mobile} · Dubai UAE</p>
+            </address>
             <a
-              href="#contact"
+              href={at("#contact")}
               onClick={close}
               className={`self-start bg-gold px-10 py-4 font-medium text-navy-deep hover:bg-[#e0c07d] sm:self-auto ${BTN}`}
             >
-              Book now
+              {cta}
             </a>
           </div>
         </div>
@@ -148,7 +156,7 @@ export default function Header() {
       <div
         className={`relative border-b transition-[translate,border-color,background-color] duration-500 ease-out ${
           solid
-            ? "border-(--rule) bg-[color-mix(in_srgb,var(--bg)_86%,transparent)] text-(--fg) backdrop-blur-md"
+            ? "border-(--rule) bg-[color-mix(in_srgb,var(--bg)_95%,transparent)] text-(--fg)"
             : "border-transparent text-white"
         } ${away && !open ? "-translate-y-full focus-within:translate-y-0" : ""}`}
       >
@@ -157,18 +165,20 @@ export default function Header() {
             solid ? "py-2" : "py-3 md:py-4"
           }`}
         >
-          <a href="#top" onClick={close} className="shrink-0 cursor-pointer transition-opacity duration-300 hover:opacity-80">
+          <a href={home ? "#top" : "/"} onClick={close} className="shrink-0 cursor-pointer transition-opacity duration-300 hover:opacity-80">
             <Image
-              {...company.logo}
-              alt={`${company.name} Leisure Yachts & Boats Rental`}
+              src={company.logo.src}
+              width={81}
+              height={72}
+              alt={logoAlt}
               preload
               className={`w-auto transition-[height,filter] duration-500 ${solid ? "h-11 md:h-12" : "h-14 brightness-150 md:h-[4.5rem]"}`}
             />
           </a>
-          <nav className="flex items-center gap-6 sm:gap-8">
+          <nav aria-label="Main" className="flex items-center gap-6 sm:gap-8">
             <ul className="hidden items-center gap-8 lg:flex">
               {links.map((l) => (
-                <li key={l.href}>
+                <li key={l.label}>
                   <a href={l.href} className="relative cursor-pointer py-2 text-[0.95rem] after:absolute after:inset-x-0 after:bottom-0 after:h-px after:origin-left after:scale-x-0 after:bg-gold after:transition-[scale] after:duration-500 hover:after:scale-x-100">
                     {l.label}
                   </a>

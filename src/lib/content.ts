@@ -2,22 +2,24 @@
 // Copy and photos come from seaseakersyachts.com. Photos are optimised into public/site with
 //   node scripts/export-site-images.mjs
 
+import film from "./hero-film.json";
+
 const photo = (name: string) => `/site/${name}.webp`;
 
 /**
  * Hero film: one continuous drone shot (yacht at anchor → stern → over the teak deck → into the salon),
- * exported from source-media/hero-yacht-2026-11-24.mp4 (kept out of public/
- * so it isn't deployed): 240 full-HD frames as H.264 for the hardware decoder (film.bin), plus AVIF / WebP stills for
- * browsers without WebCodecs.
+ * exported from source-media/hero-yacht-2026-11-25.mp4 (kept out of public/ so it isn't deployed): full-HD frames as
+ * H.264 for the hardware decoder (film.bin), plus AVIF / WebP stills for browsers without WebCodecs. The frames the
+ * video leaves out are filled in, and the fast part has twice as many: see scripts/hero-frames.mjs.
  * Re-export after replacing the video:
  *   node scripts/export-hero.mjs source-media/<file>.mp4
  *   node scripts/export-hero-film.mjs source-media/<file>.mp4
  * Caption `from` / `to` are fractions of the whole scroll.
  */
 export const heroFilm = {
-  frames: 240,
+  ...film, // frames and pace, written by scripts/export-hero-film.mjs
   src: { lg: "/hero/lg", sm: "/hero/sm" },
-  length: 6, // viewport heights of scroll for the film
+  length: 7, // viewport heights of scroll for the film
   captions: [
     { lines: ["Every horizon,", "privately yours."], from: 0.1, to: 0.46 },
     { lines: ["A voyage", "without compromise."], from: 0.5, to: 1 },
@@ -43,10 +45,6 @@ export const company = {
     { label: "Terms And Conditions", href: "https://seaseakersyachts.com/terms-and-conditions/" },
   ],
 };
-
-/** Prefilled WhatsApp chat, used by every "Book now" */
-export const bookOnWhatsApp = (what: string) =>
-  `${company.whatsapp}&text=${encodeURIComponent(`Hello Sea Seakers, I would like to book: ${what}`)}`;
 
 export const welcome = {
   kicker: "Most affordable yacht rental service in Dubai",

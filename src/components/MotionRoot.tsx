@@ -6,6 +6,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import type { Aos } from "@/lib/motion";
+import { heldIn, openings, stagePoint, stages } from "@/lib/stages";
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 // Mobile browsers resize the viewport as the address bar hides/shows; don't re-measure pins for that.
@@ -13,13 +14,13 @@ ScrollTrigger.config({ ignoreMobileResize: true });
 
 /**
  * Smooth scrolling (Lenis, synced to GSAP's ticker) plus the declarative scroll animations.
- * Below the hero nothing is pinned or held: the page always moves with the scroll.
  * Pieces come in every time they are scrolled to, going down (from below) and coming back up (from above).
  * They are put away again only once they are completely out of sight, so nothing vanishes while it is read.
  *  data-aos        fade-up, fade-down, fade-left, fade-right or zoom-in (data-aos-delay="120": milliseconds)
  *  data-aos-img    on a picture frame: the picture inside also settles from a slight zoom
  *  data-lines      heading whose lines rise one after another
  *  data-drift      inside a frame: gentle parallax
+ * Tied to the scroll (lib/stages): data-stage sections, and data-opens picture frames.
  */
 export default function MotionRoot() {
   useEffect(() => {
@@ -32,7 +33,7 @@ export default function MotionRoot() {
     if (!location.hash) window.scrollTo(0, 0);
 
     // One continuous glide for the whole page, hero included
-    const lenis = reduce ? null : new Lenis({ lerp: 0.085, wheelMultiplier: 0.95 });
+    const lenis = reduce ? null : new Lenis({ lerp: 0.1, wheelMultiplier: 0.95 });
     const tick = (time: number) => lenis?.raf(time * 1000);
     if (lenis) {
       lenis.on("scroll", ScrollTrigger.update);
@@ -57,7 +58,7 @@ export default function MotionRoot() {
       if (!target) return;
       e.preventDefault();
       lenis.start(); // a link inside the open menu: resume before scrolling
-      glideTo(top(target));
+      glideTo(top(target) + stagePoint(target));
     };
     document.addEventListener("click", onClick);
 
@@ -71,14 +72,31 @@ export default function MotionRoot() {
       const all = (q: string) => gsap.utils.toArray<HTMLElement>(q);
 
       // ---- fetch every picture a screen ahead, so none arrives empty
-      all("[data-aos-img], [data-over]").forEach((el) =>
+      all("[data-aos-img], [data-stage]").forEach((el) =>
         ScrollTrigger.create({
           trigger: el,
           start: "top 220%",
           once: true,
-          onEnter: () => el.querySelectorAll("img").forEach((img) => (img.loading = "eager")),
+          // and unpacked before they are needed, which would otherwise hold up the scroll for a moment
+          onEnter: () =>
+            el.querySelectorAll("img").forEach((img) => {
+              img.loading = "eager";
+              img.decode().catch(() => {});
+            }),
         }),
       );
+
+      // the large pictures of the stages one after another from the start: they take a while, and must not come late
+      const large = all("[data-stage] .stage-pic img, [data-stage-pic] img") as HTMLImageElement[];
+      const next = () => {
+        const img = large.shift();
+        if (!img) return;
+        img.loading = "eager";
+        img.fetchPriority = "high"; // ahead of the rest of the hero film, which plays from what it has
+        if (img.complete) next();
+        else for (const type of ["load", "error"]) img.addEventListener(type, next, { once: true });
+      };
+      next();
 
       // ---- arrivals
       /** `show` each time the piece scrolls into view, from either side; `hide` once it is fully out of sight */
@@ -95,15 +113,17 @@ export default function MotionRoot() {
           hide();
         };
         hide();
+        const endTrigger = heldIn(trigger) ?? trigger; // inside a held section it stays in view until that one leaves
         // in this order: a jump right past a piece shows and then hides it
         ScrollTrigger.create({
           trigger,
+          endTrigger,
           start: "clamp(top 90%)",
           end: "bottom 10%",
           onEnter: () => enter(1),
           onEnterBack: () => enter(-1),
         });
-        ScrollTrigger.create({ trigger, start: "top bottom", end: "bottom top", onLeave: leave, onLeaveBack: leave });
+        ScrollTrigger.create({ trigger, endTrigger, start: "top bottom", end: "bottom top", onLeave: leave, onLeaveBack: leave });
       };
 
       const narrow = window.innerWidth < 768; // sideways moves become up and down ones: there is no room beside the text
@@ -166,6 +186,8 @@ export default function MotionRoot() {
       });
 
       // ---- tied to the scroll
+      stages();
+      openings();
       all("[data-drift]").forEach((el) =>
         gsap.fromTo(
           el,
@@ -190,7 +212,7 @@ export default function MotionRoot() {
     // The hero's pin has just been added above every section: go where the address asked for
     const asked = location.hash.length > 1 && document.getElementById(location.hash.slice(1));
     if (asked) {
-      if (lenis) lenis.scrollTo(top(asked), { immediate: true, force: true });
+      if (lenis) lenis.scrollTo(top(asked) + stagePoint(asked), { immediate: true, force: true });
       else window.scrollTo(0, top(asked));
     }
 

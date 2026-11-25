@@ -1,0 +1,11 @@
+.git
+.next
+.claude
+node_modules
+source-media
+uploads
+src/generated
+public/*.mp4
+.env*
+*.tsbuildinfo
+backups

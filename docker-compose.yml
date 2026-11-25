@@ -1,0 +1,62 @@
+# Database only (local development):  docker compose up -d mysql
+# Everything:                         docker compose --profile app up -d --build
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-time-zone=+00:00
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-seaseekers}
+      MYSQL_USER: ${MYSQL_USER:-seaseekers}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD in .env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env}
+      MYSQL_ROOT_HOST: localhost
+    ports:
+      - "127.0.0.1:3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./docker/mysql-init.sh:/docker-entrypoint-initdb.d/10-shadow.sh:ro
+    healthcheck:
+      # over TCP: while the data folder is being made the server only listens on its socket
+      test: ["CMD-SHELL", "MYSQL_PWD=$$MYSQL_PASSWORD mysqladmin ping -h 127.0.0.1 -u $$MYSQL_USER --silent"]
+      interval: 5s
+      timeout: 3s
+      start_period: 60s
+      retries: 12
+
+  migrate:
+    profiles: [app]
+    build: { context: ., target: deps }
+    command: npx prisma migrate deploy
+    environment:
+      DATABASE_URL: mysql://${MYSQL_USER:-seaseekers}:${MYSQL_PASSWORD}@mysql:3306/${MYSQL_DATABASE:-seaseekers}
+    depends_on:
+      mysql: { condition: service_healthy }
+
+  web:
+    profiles: [app]
+    build: { context: ., target: runner }
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: mysql://${MYSQL_USER:-seaseekers}:${MYSQL_PASSWORD}@mysql:3306/${MYSQL_DATABASE:-seaseekers}
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in .env}
+      SITE_URL: ${SITE_URL:-https://seaseakersyachts.com}
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      PROXY_HOPS: ${PROXY_HOPS:-1}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      UPLOAD_DIR: /app/uploads
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
+      SEED_SEO_EMAIL: ${SEED_SEO_EMAIL:-}
+      SEED_SEO_PASSWORD: ${SEED_SEO_PASSWORD:-}
+    ports:
+      - "${WEB_BIND:-127.0.0.1}:${WEB_PORT:-3020}:3000"
+    security_opt: ["no-new-privileges:true"]
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+volumes:
+  mysql-data:
+  uploads:

@@ -1,21 +1,22 @@
 // Exports the hero film for the browser's hardware video decoder: node scripts/export-hero-film.mjs source-media/<file>.mp4
 // Needs ffmpeg on PATH. Writes public/hero/{lg,sm}/film.bin + film.json (what nearly every visitor gets) and the
-// poster 001.avif / 001.webp. export-hero.mjs makes the still frames for browsers without WebCodecs.
+// poster 001.avif / 001.webp, and src/lib/hero-film.json. export-hero.mjs makes the still frames for browsers without WebCodecs.
 //
 // film.bin is H.264, cut into groups of GOP frames that start on a key frame, so any spot is a few frames' work away in
 // either direction. The pieces are stored coarse to fine: key frames spread over the film come first.
-import { execFileSync, spawn } from "node:child_process";
+import { spawn } from "node:child_process";
 import { once } from "node:events";
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { CRISP, PORTRAIT } from "./hero-look.mjs";
-import { withoutMark } from "./hero-mark.mjs";
+import sharp from "sharp";
+import { heroFrames } from "./hero-frames.mjs";
 
 const input = process.argv[2];
 if (!input) throw new Error("usage: node scripts/export-hero-film.mjs <video>");
 const GOP = 4;
-const CRF = { lg: 15, sm: 18 };
+const CRF = { lg: 17, sm: 19 };
 
 /** Annex B stream → one Buffer per frame, each with the parameter sets in front of it */
 function accessUnits(stream) {
@@ -41,9 +42,9 @@ function accessUnits(stream) {
 
 const tmp = mkdtempSync(join(tmpdir(), "hero-film-"));
 try {
-  const decode = ["-v", "error", "-i", input, "-an", "-sws_flags", "lanczos+accurate_rnd+full_chroma_int", "-fps_mode", "passthrough"];
-  execFileSync("ffmpeg", [...decode, join(tmp, "%03d.png")], { stdio: ["ignore", "inherit", "inherit"] });
-  const frames = readdirSync(tmp).filter((f) => f.endsWith(".png")).sort();
+  const { files: frames, pace } = await heroFrames(input);
+  // the page's own copy: how many frames there are, and how they are spread over the scroll
+  writeFileSync("src/lib/hero-film.json", JSON.stringify({ frames: frames.length, pace }));
 
   for (const dir of ["lg", "sm"]) {
     const { width, height } = dir === "sm" ? PORTRAIT : { width: 1920, height: 1080 };
@@ -63,7 +64,7 @@ try {
     );
     const closed = once(ff, "close");
     for (const [n, file] of frames.entries()) {
-      const image = await withoutMark(join(tmp, file));
+      const image = sharp(file).removeAlpha();
       if (dir === "sm") image.resize({ ...PORTRAIT, fit: "cover" });
       image.sharpen(CRISP);
       if (n === 0) {
