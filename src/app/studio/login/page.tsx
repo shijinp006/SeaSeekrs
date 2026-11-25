@@ -14,7 +14,7 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
   // only back to a studio page, never to another site
   const back = typeof next === "string" && /^\/studio(\/[\w/-]*)?$/.test(next) ? next : "/studio";
   return (
-    <main className="relative grid min-h-svh bg-navy-deep text-white lg:grid-cols-[1.25fr_1fr]">
+    <main data-studio className="relative grid min-h-svh bg-navy-deep text-white lg:grid-cols-[1.25fr_1fr]">
       <div className="absolute inset-0 lg:static">
         <Image src={about.src} alt="" fill preload sizes="(min-width: 1024px) 60vw, 100vw" className="object-cover" />
         <span className="absolute inset-0 bg-gradient-to-t from-navy-deep via-navy-deep/45 to-navy-deep/25 max-lg:bg-navy-deep/75" />

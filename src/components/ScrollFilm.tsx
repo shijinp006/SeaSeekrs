@@ -576,7 +576,7 @@ export default function ScrollFilm({ frames, pace: givenPace, src, captions: giv
     // React-owned wrapper keeps GSAP's pin-spacer DOM move invisible to React. It is as tall as the pin will make it from the
     // start, or the next section would cover the hero until the scripts have run. Without scripts or motion nothing is pinned.
     <div style={{ "--film": `${(1 + length + (overlap ? 1 : 0)) * 100}svh` } as React.CSSProperties} className="min-h-(--film) motion-reduce:min-h-0 noscript:min-h-0">
-      <section ref={root} className="relative h-[100svh] overflow-hidden bg-navy-deep text-white">
+      <section ref={root} data-film className="relative h-[100svh] overflow-hidden bg-navy-deep text-white">
         {/* poster until the first frame is decoded */}
         <picture>
           <source media={PORTRAIT} type="image/avif" srcSet={`${src.sm}/001.avif`} />

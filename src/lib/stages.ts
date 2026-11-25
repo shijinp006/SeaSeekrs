@@ -10,8 +10,18 @@ const FROM: Record<Aos, gsap.TweenVars> = {
   "fade-down": { y: -56 },
   "fade-left": { x: 72 },
   "fade-right": { x: -72 },
-  "zoom-in": { scale: 0.8 },
+  "zoom-in": { scale: 0.86 },
 };
+/** Seconds the picture takes to catch up with the scroll: one turn of the wheel becomes one even movement */
+const SOFT = 0.7;
+
+/** How words come in: headings rise out of a line, as if from behind an edge; the rest floats up */
+const words = (el: HTMLElement, from: gsap.TweenVars): gsap.TweenVars =>
+  el.matches("h1, h2, h3, .display")
+    ? { opacity: 0, y: 46, clipPath: "inset(0% 0% 100% 0%)" }
+    : { opacity: 0, clipPath: "inset(-10% -10% -10% -10%)", ...from };
+const THERE = { opacity: 1, x: 0, y: 0, scale: 1, clipPath: "inset(-20% -10% -20% -10%)" };
+
 /** Stages are only held where there is room for them: see .stage in globals.css */
 const held = (view: Element) => getComputedStyle(view).position === "sticky";
 
@@ -99,7 +109,7 @@ const word = (view: HTMLElement, pic: HTMLElement, text: string): Opening => {
       cover.width = Math.round(w * scale);
       cover.height = Math.round(h * scale);
       colour = getComputedStyle(view.parentElement!).backgroundColor;
-      const family = getComputedStyle(view.querySelector("h2") ?? view).fontFamily;
+      const family = getComputedStyle(document.documentElement).getPropertyValue("--font-hero") || "serif";
       size = Math.min(w * 0.27, h * 0.62);
       font = `500 ${size}px ${family}`;
       // the widest stroke near the middle of the word is the way in
@@ -153,7 +163,7 @@ const word = (view: HTMLElement, pic: HTMLElement, text: string): Opening => {
  *  open   the picture fills the screen and the words come over it
  *         data-shape: portal (through an arch), word (through the letters of data-word), slices
  *  aside  the picture stands in the middle, then moves to its place beside the words
- *         data-shape: tilt (rises from lying flat), letterbox (opens from a narrow band)
+ *         data-shape: settle (stands large in the middle first), curtain (opens where it is)
  *  rail   a row of cards runs sideways with the scroll
  * Call inside a gsap.context.
  */
@@ -177,13 +187,12 @@ export function stages() {
       if (kind === "rail") {
         const rail = view.querySelector<HTMLElement>(".rail")!;
         if (!held(view)) return;
-        ScrollTrigger.create({
-          trigger: stage,
-          start: "top top",
-          end: "bottom bottom",
-          onUpdate: (self) => {
-            rail.scrollLeft = clamp((self.progress - 0.01) / 0.97) * (rail.scrollWidth - rail.clientWidth);
-          },
+        const at = { x: 0 };
+        gsap.to(at, {
+          x: 1,
+          ease: "none",
+          onUpdate: () => void (rail.scrollLeft = at.x * (rail.scrollWidth - rail.clientWidth)),
+          scrollTrigger: { trigger: stage, start: "top top", end: "bottom bottom", scrub: SOFT },
         });
         return;
       }
@@ -198,9 +207,13 @@ export function stages() {
 
       if (!held(view)) {
         // no room to hold it: the picture opens and the words come while the section is scrolled in
-        if (aside) opening(pic, shape === "letterbox" ? "slit" : "expand");
+        if (aside) opening(pic, "up");
         steps.forEach((el) =>
-          gsap.from(el, { opacity: 0, ...from(el), ease: "none", scrollTrigger: { trigger: el, start: "top 96%", end: "top 72%", scrub: true } }),
+          gsap.fromTo(el, words(el, from(el)), {
+            ...THERE,
+            ease: "sine.out",
+            scrollTrigger: { trigger: el, start: "top 98%", end: "top 64%", scrub: SOFT },
+          }),
         );
         return;
       }
@@ -209,9 +222,9 @@ export function stages() {
         defaults: { ease: "none" },
         scrollTrigger: {
           trigger: stage,
-          start: aside ? "top 75%" : shape === "slices" ? "top 40%" : shape === "word" ? "top 8%" : "top 22%", // under way before it is held: no scroll without something moving
+          start: shape === "settle" ? "top 70%" : shape === "curtain" ? "top 45%" : shape === "portal" ? "top 22%" : shape === "slices" ? "top 40%" : "top 8%", // under way before it is held: no scroll without something moving
           end: "bottom bottom",
-          scrub: true,
+          scrub: shape === "portal" ? true : SOFT,
           invalidateOnRefresh: true,
         },
       });
@@ -225,31 +238,28 @@ export function stages() {
           }
           return { x: view.clientWidth / 2 - x, y: view.clientHeight / 2 - y };
         };
-        const large = () => Math.min(1.2, (view.clientHeight * 0.86) / pic.offsetHeight);
-        if (shape === "letterbox") {
-          const band = { t: 0 };
+        const inner = pic.querySelector("img")!;
+        if (shape === "curtain") {
+          const open = { t: 0 };
           const draw = () => {
-            const t = band.t;
-            pic.style.clipPath = t >= 1 ? "" : `inset(${mix(43, 0, t).toFixed(2)}% ${mix(6, 0, t).toFixed(2)}% round ${mix(0, 20, t).toFixed(1)}px)`;
+            const t = open.t;
+            pic.style.clipPath = t >= 1 ? "" : `inset(${mix(12, 0, t).toFixed(2)}% ${mix(46, 0, t).toFixed(2)}% round ${mix(40, 20, t).toFixed(1)}px)`;
           };
           draw();
-          tl.to(band, { t: 1, duration: 0.34, ease: "sine.inOut", onUpdate: draw }, 0.02);
-          tl.fromTo(pic.querySelector("img"), { scale: 1.3 }, { scale: 1, duration: 0.36, ease: "power1.out" }, 0);
-          tl.fromTo(pic, { x: () => rest().x, y: () => rest().y, scale: large }, { x: 0, y: 0, scale: 1, duration: 0.26, ease: "sine.inOut" }, 0.36);
+          tl.to(open, { t: 1, duration: 0.5, ease: "power1.inOut", onUpdate: draw }, 0);
+          tl.fromTo(inner, { scale: 1.35 }, { scale: 1, duration: 0.6, ease: "power1.out" }, 0);
           ctx.add(() => () => void (pic.style.clipPath = ""));
         } else {
-          tl.fromTo(
-            pic,
-            { x: () => rest().x, y: () => rest().y, scale: () => large() * 0.8, transformPerspective: 1100, rotateX: 58 },
-            { scale: large, rotateX: 0, duration: 0.36, ease: "sine.out" },
-            0,
-          );
-          tl.to(pic, { x: 0, y: 0, scale: 1, duration: 0.26, ease: "sine.inOut" }, 0.36);
+          const large = () => Math.min(1.22, (view.clientHeight * 0.88) / pic.offsetHeight);
+          tl.fromTo(pic, { x: () => rest().x, y: () => rest().y, scale: () => large() * 0.9, opacity: 0 }, { scale: large, opacity: 1, duration: 0.22, ease: "sine.out" }, 0);
+          tl.to(pic, { x: 0, y: 0, scale: 1, duration: 0.38, ease: "power2.inOut" }, 0.2);
+          tl.fromTo(inner, { scale: 1.3 }, { scale: 1, duration: 0.58, ease: "sine.inOut" }, 0);
         }
       } else {
         const image = pic.querySelector("img")!;
         const shade = pic.querySelector(".stage-shade")!;
-        const way = shape === "word" ? word(view, pic, stage.dataset.word ?? "") : shape === "slices" ? slices(view, pic) : portal(view, pic);
+        const still = shape === "portal";
+        const way = still ? portal(view, pic) : shape === "word" ? word(view, pic, stage.dataset.word ?? "") : slices(view, pic);
         const open = { t: 0 };
         const draw = () => way.draw(open.t);
         const refit = () => {
@@ -257,7 +267,7 @@ export function stages() {
           draw();
         };
         refit();
-        tl.to(open, { t: 1, duration: 0.5, ease: shape === "slices" ? "sine.inOut" : shape === "word" ? "sine.in" : "none", onUpdate: draw }, 0.02);
+        tl.to(open, { t: 1, duration: 0.5, ease: still ? "none" : shape === "word" ? "sine.in" : "sine.inOut", onUpdate: draw }, 0.02);
         // a layer of its own from well before it is needed: drawn once, then only moved by the graphics chip
         ScrollTrigger.create({
           trigger: stage,
@@ -274,10 +284,12 @@ export function stages() {
           way.clear();
         });
       }
-      const first = 0.54;
+      const still = shape === "portal";
+      const first = still ? 0.54 : 0.5;
       const gap = Math.min(0.08, 0.28 / steps.length);
       steps.forEach((el, i) => {
-        tl.fromTo(el, { opacity: 0, ...from(el) }, { opacity: 1, x: 0, y: 0, scale: 1, duration: 0.14, ease: "power2.out" }, first + i * gap);
+        if (still) tl.fromTo(el, { opacity: 0, ...from(el) }, { opacity: 1, x: 0, y: 0, scale: 1, duration: 0.14, ease: "power2.out" }, first + i * gap);
+        else tl.fromTo(el, words(el, from(el)), { ...THERE, duration: 0.22, ease: "sine.out" }, first + i * gap);
       });
       tl.set({}, {}, 1);
     });
@@ -285,35 +297,40 @@ export function stages() {
 }
 
 // ---------------------------------------------------------------- single pictures
-export type Opens = "up" | "left" | "right" | "slit" | "expand";
+export type Opens = "up" | "left" | "right" | "expand";
 /** What is covered at first, as parts of the picture: from the top, right, bottom and left */
 const COVERED: Record<Opens, [number, number, number, number]> = {
-  up: [0.78, 0, 0, 0],
-  left: [0, 0.8, 0, 0], // grows from its left edge
-  right: [0, 0, 0, 0.8],
-  slit: [0.42, 0, 0.42, 0],
-  expand: [0.28, 0.3, 0.28, 0.3],
+  up: [0.5, 0.04, 0, 0.04],
+  left: [0.06, 0.42, 0.06, 0], // grows from its left edge
+  right: [0.06, 0, 0.06, 0.42],
+  expand: [0.14, 0.16, 0.14, 0.16],
 };
 
 /** One picture frame opening while it is scrolled in; what is written on it comes last */
 function opening(el: HTMLElement, how: Opens) {
-  const words = [...el.children].slice(1).filter((c): c is HTMLElement => c instanceof HTMLElement && c.tagName !== "IMG");
+  const captions = [...el.children].slice(1).filter((c): c is HTMLElement => c instanceof HTMLElement && c.tagName !== "IMG");
   const corner = parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0;
-  const draw = (p: number) => {
-    const left = (1 - p) ** 2;
+  const state = { p: 0 };
+  const draw = () => {
+    const left = 1 - state.p;
     el.style.clipPath = left <= 0 ? "" : `inset(${COVERED[how].map((v) => `${(v * left * 100).toFixed(2)}%`).join(" ")} round ${px(corner)})`;
-    words.forEach((c) => (c.style.opacity = clamp((p - 0.6) / 0.4).toFixed(3)));
+    captions.forEach((c) => (c.style.opacity = clamp((state.p - 0.45) / 0.55).toFixed(3)));
   };
-  ScrollTrigger.create({
-    trigger: el,
-    start: "clamp(top 96%)",
-    end: () => (el.offsetHeight > window.innerHeight * 0.75 ? "top 30%" : "center 52%"),
-    onUpdate: (self) => draw(self.progress),
-    onRefresh: (self) => draw(self.progress),
+  draw();
+  gsap.to(state, {
+    p: 1,
+    ease: "sine.out",
+    onUpdate: draw,
+    scrollTrigger: {
+      trigger: el,
+      start: "clamp(top 100%)",
+      end: () => (el.offsetHeight > window.innerHeight * 0.75 ? "top 18%" : "center 48%"),
+      scrub: 0.9,
+    },
   });
   gsap.context(() => () => {
     el.style.clipPath = "";
-    words.forEach((c) => (c.style.opacity = ""));
+    captions.forEach((c) => (c.style.opacity = ""));
   });
 }
 

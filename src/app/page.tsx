@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import JsonLd from "@/components/JsonLd";
+import PageTransition from "@/components/PageTransition";
 import SiteHeader from "@/components/SiteHeader";
 import { headingStyle, Tagged } from "@/components/Title";
 import ScrollFilm from "@/components/ScrollFilm";
@@ -47,7 +48,8 @@ export default async function Home() {
     <>
       <JsonLd data={[businessLd(site), websiteLd(site), faqLd(site)]} />
       <SiteHeader site={site} />
-      <main id="top" tabIndex={-1} className="outline-none">
+      <PageTransition>
+<main id="top" tabIndex={-1} className="outline-none">
         <ScrollFilm
           frames={heroFilm.frames}
           pace={heroFilm.pace}
@@ -73,6 +75,7 @@ export default async function Home() {
           <Bow site={site} />
         </div>
       </main>
+</PageTransition>
       <Footer site={site} />
       {/* Last: its effect runs after the page has hydrated and the pinned sequences exist */}
       <MotionRoot />

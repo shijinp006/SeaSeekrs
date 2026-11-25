@@ -144,7 +144,7 @@ export default function Header({
             <a
               href={at("#contact")}
               onClick={close}
-              className={`self-start bg-gold px-10 py-4 font-medium text-navy-deep hover:bg-[#e0c07d] sm:self-auto ${BTN}`}
+              className={`self-start bg-gold px-10 py-4 font-medium text-navy-deep hover:bg-gold-light sm:self-auto ${BTN}`}
             >
               {cta}
             </a>
@@ -154,6 +154,7 @@ export default function Header({
 
       {/* Top bar */}
       <div
+        style={{ viewTransitionName: "site-header" }}
         className={`relative border-b transition-[translate,border-color,background-color] duration-500 ease-out ${
           solid
             ? "border-(--rule) bg-[color-mix(in_srgb,var(--bg)_95%,transparent)] text-(--fg)"

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ViewTransition } from "react";
 import { CardArrow } from "@/components/Icons";
 import { Tagged } from "@/components/Title";
 import type { Site } from "@/lib/server/site";
@@ -8,6 +9,7 @@ import type { Service } from "@/lib/services";
 export default function ServiceCard({ service: s, site, heading = "h2" }: { service: Service; site: Site; heading?: "h2" | "h3" }) {
   return (
     <Link href={`/services/${s.slug}`} className="group card-focus block h-full">
+      <ViewTransition name={`service-${s.slug}`} share="morph" default="none">
       <div className="relative aspect-[4/3] overflow-hidden rounded-port bg-navy-deep/10">
         <Image
           src={s.photos[0]}
@@ -24,6 +26,7 @@ export default function ServiceCard({ service: s, site, heading = "h2" }: { serv
           <CardArrow />
         </div>
       </div>
+      </ViewTransition>
       <p className="mt-5 pr-4 leading-relaxed text-(--mute)">{s.summary}</p>
       <p className="mt-3 text-(--accent) underline-offset-4 group-hover:underline">View details</p>
     </Link>

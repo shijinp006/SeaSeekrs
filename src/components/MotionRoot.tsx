@@ -128,11 +128,11 @@ export default function MotionRoot() {
 
       const narrow = window.innerWidth < 768; // sideways moves become up and down ones: there is no room beside the text
       const FROM: Record<Aos, (dir: 1 | -1) => gsap.TweenVars> = {
-        "fade-up": (dir) => ({ y: 56 * dir }),
-        "fade-down": (dir) => ({ y: -56 * dir }),
-        "fade-left": (dir) => (narrow ? { y: 48 * dir } : { x: 72 }),
-        "fade-right": (dir) => (narrow ? { y: 48 * dir } : { x: -72 }),
-        "zoom-in": () => ({ scale: 0.88 }),
+        "fade-up": (dir) => ({ y: 48 * dir }),
+        "fade-down": (dir) => ({ y: -48 * dir }),
+        "fade-left": (dir) => (narrow ? { y: 40 * dir } : { x: 52 }),
+        "fade-right": (dir) => (narrow ? { y: 40 * dir } : { x: -52 }),
+        "zoom-in": () => ({ scale: 0.93 }),
       };
       all("[data-aos]").forEach((el) => {
         const imgs = el.hasAttribute("data-aos-img") ? [...el.querySelectorAll("img")] : [];
@@ -144,9 +144,9 @@ export default function MotionRoot() {
             gsap.fromTo(
               el,
               { opacity: 0, x: 0, y: 0, scale: 1, ...FROM[el.dataset.aos as Aos](dir) },
-              { opacity: 1, x: 0, y: 0, scale: 1, duration: 1, delay, ease: "power3.out", overwrite: true },
+              { opacity: 1, x: 0, y: 0, scale: 1, duration: 1.5, delay, ease: "power2.out", overwrite: true },
             );
-            if (imgs.length) gsap.fromTo(imgs, { scale: 1.18 }, { scale: 1, duration: 1.6, delay, ease: "power3.out", overwrite: true });
+            if (imgs.length) gsap.fromTo(imgs, { scale: 1.2 }, { scale: 1, duration: 2.4, delay, ease: "power2.out", overwrite: true });
           },
           // hidden without any offset, so that its place on the page is always measured right
           () => gsap.set(el, { opacity: 0, x: 0, y: 0, scale: 1, overwrite: true }),
@@ -175,7 +175,7 @@ export default function MotionRoot() {
             gsap.fromTo(
               lines,
               { yPercent: 115 * dir },
-              { yPercent: 0, duration: 1.1, ease: "expo.out", stagger: { each: 0.11, from: dir > 0 ? "start" : "end" }, overwrite: true },
+              { yPercent: 0, duration: 1.5, ease: "power4.out", stagger: { each: 0.15, from: dir > 0 ? "start" : "end" }, overwrite: true },
             );
           },
           () => {
@@ -191,11 +191,11 @@ export default function MotionRoot() {
       all("[data-drift]").forEach((el) =>
         gsap.fromTo(
           el,
-          { yPercent: -4 },
+          { yPercent: -5 },
           {
-            yPercent: 4,
+            yPercent: 5,
             ease: "none",
-            scrollTrigger: { trigger: el.parentElement!, start: "top bottom", end: "bottom top", scrub: true },
+            scrollTrigger: { trigger: el.parentElement!, start: "top bottom", end: "bottom top", scrub: 0.6 },
           },
         ),
       );

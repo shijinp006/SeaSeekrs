@@ -15,7 +15,7 @@ export default async function StudioLayout({ children }: { children: React.React
   const user = await requireUser();
   const [pending, last, newBookings] = await Promise.all([getPending(), lastPublished(), user.role === "ADMIN" ? countNewBookings() : 0]);
   return (
-    <div data-tone="foam" className="min-h-svh bg-foam text-ink">
+    <div data-tone="foam" data-studio className="min-h-svh bg-foam text-ink">
       <Sidebar user={user} newBookings={newBookings} />
       <div className="lg:pl-64">
         <TopBar pending={pending} last={last && when.format(last.at)} />

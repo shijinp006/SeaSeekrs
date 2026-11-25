@@ -6,6 +6,7 @@ import Gallery from "@/components/Gallery";
 import { Check } from "@/components/Icons";
 import JsonLd from "@/components/JsonLd";
 import ServiceCard from "@/components/ServiceCard";
+import PageTransition from "@/components/PageTransition";
 import SiteHeader from "@/components/SiteHeader";
 import SmoothScroll from "@/components/SmoothScroll";
 import { Footer } from "@/components/sections/Charter";
@@ -69,7 +70,8 @@ export default async function ServicePage({ params }: Props) {
         ]}
       />
       <SiteHeader site={site} home={false} />
-      <main id="top" tabIndex={-1} className="outline-none">
+      <PageTransition>
+<main id="top" tabIndex={-1} className="outline-none">
         <section data-tone="deep" className="pb-14 pt-36 md:pb-20 md:pt-48">
           <div className="container-x">
             <div className="text-(--mute)">
@@ -86,11 +88,11 @@ export default async function ServicePage({ params }: Props) {
           <section data-tone="foam" className="py-14 md:py-20">
             <div className="container-x grid gap-x-12 gap-y-10 lg:grid-cols-12">
               <div className="lg:col-span-7">
-                <Gallery aos="fade-up" first name={service.title} photos={service.photos} alts={alts} />
+                <Gallery aos="fade-up" morph={`service-${service.slug}`} first name={service.title} photos={service.photos} alts={alts} />
               </div>
               <div className="lg:col-span-5">
-                <h2 className="display t-title">About this service</h2>
-                <div className="mt-5 space-y-4 t-lead text-(--mute)">
+                <h2 data-aos="fade-up" className="display t-title">About this service</h2>
+                <div data-aos="fade-up" className="mt-5 space-y-4 t-lead text-(--mute)">
                   {service.body.map((p, i) => (
                     <p key={i}>{p}</p>
                   ))}
@@ -112,9 +114,9 @@ export default async function ServicePage({ params }: Props) {
 
           <section data-tone="shallow" className="py-14 md:py-20">
             <div className="container-x">
-              <h2 className="display t-section">{service.yacht ? "On board" : "Our fleet"}</h2>
+              <h2 data-aos="fade-up" className="display t-section">{service.yacht ? "On board" : "Our fleet"}</h2>
               {yachtsFor(service, site).map((y) => (
-                <article key={y.title} className="mt-10 grid gap-x-12 gap-y-8 border-t border-(--rule) pt-8 lg:grid-cols-12">
+                <article key={y.title} data-aos="fade-up" className="mt-10 grid gap-x-12 gap-y-8 border-t border-(--rule) pt-8 lg:grid-cols-12">
                   <div className="lg:col-span-5">
                     <h3 className="display t-card">{y.title}</h3>
                     <p className="mt-4">
@@ -153,10 +155,10 @@ export default async function ServicePage({ params }: Props) {
 
           <section data-tone="foam" className="py-14 md:py-20">
             <div className="container-x">
-              <h2 className="display t-section">More services</h2>
+              <h2 data-aos="fade-up" className="display t-section">More services</h2>
               <ul className="mt-10 grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
-                {moreServices(site, service, 3).map((s) => (
-                  <li key={s.slug}>
+                {moreServices(site, service, 3).map((s, i) => (
+                  <li key={s.slug} data-aos="fade-up" data-aos-delay={i * 130}>
                     <ServiceCard service={s} site={site} heading="h3" />
                   </li>
                 ))}
@@ -165,6 +167,7 @@ export default async function ServicePage({ params }: Props) {
           </section>
         </div>
       </main>
+</PageTransition>
       <Footer site={site} home={false} />
       <SmoothScroll key={service.slug} />
     </>

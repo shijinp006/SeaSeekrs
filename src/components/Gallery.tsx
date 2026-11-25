@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, ViewTransition } from "react";
 import type { Aos } from "@/lib/motion";
 
 /**
@@ -13,6 +13,7 @@ export default function Gallery({
   photos,
   alts,
   aos,
+  morph,
   first = false,
 }: {
   name: string;
@@ -20,6 +21,8 @@ export default function Gallery({
   /** alt text by picture */
   alts: Record<string, string>;
   aos: Aos;
+  /** the name its picture keeps from the card that led here (view transition) */
+  morph?: string;
   /** at the top of the page: its picture is loaded straight away */
   first?: boolean;
 }) {
@@ -28,26 +31,35 @@ export default function Gallery({
   const [ready, setReady] = useState([0]); // …and those that have arrived
   const want = (i: number) => setAsked((old) => (old.includes(i) ? old : [...old, i]));
   const shown = ready.includes(at) ? at : (ready.at(-1) ?? 0); // the one before stays until the new one is there
+  const frame = (
+    <div data-aos={aos} data-aos-img data-opens="up" className="relative isolate aspect-[4/3] overflow-hidden rounded-port bg-navy-deep/10 lg:aspect-[3/2]">
+      {photos.map((src, i) => asked.includes(i) && (
+        <Image
+          key={src}
+          src={src}
+          alt={alts[src] || (i ? `${name}, photo ${i + 1}` : name)}
+          aria-hidden={i !== shown}
+          fill
+          onLoad={() => setReady((old) => (old.includes(i) ? old : [...old, i]))}
+          loading={(first && i === 0) || i > 0 ? "eager" : "lazy"}
+          fetchPriority={first && i === 0 ? "high" : undefined}
+          sizes="(min-width: 1024px) 62vw, 100vw"
+          className={`object-cover transition-[opacity,scale] duration-[1300ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
+            i === shown ? "opacity-100" : "scale-[1.05] opacity-0"
+          }`}
+        />
+      ))}
+    </div>
+  );
   return (
     <div>
-      <div data-aos={aos} data-aos-img data-opens="slit" className="relative isolate aspect-[4/3] overflow-hidden rounded-port bg-navy-deep/10 lg:aspect-[3/2]">
-        {photos.map((src, i) => asked.includes(i) && (
-          <Image
-            key={src}
-            src={src}
-            alt={alts[src] || (i ? `${name}, photo ${i + 1}` : name)}
-            aria-hidden={i !== shown}
-            fill
-            onLoad={() => setReady((old) => (old.includes(i) ? old : [...old, i]))}
-            loading={(first && i === 0) || i > 0 ? "eager" : "lazy"}
-            fetchPriority={first && i === 0 ? "high" : undefined}
-            sizes="(min-width: 1024px) 62vw, 100vw"
-            className={`object-cover transition-[opacity,scale] duration-[900ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
-              i === shown ? "opacity-100" : "scale-[1.05] opacity-0"
-            }`}
-          />
-        ))}
-      </div>
+      {morph ? (
+        <ViewTransition name={morph} share="morph" default="none">
+          {frame}
+        </ViewTransition>
+      ) : (
+        frame
+      )}
       <div className="mt-3 grid grid-cols-5 gap-2 md:mt-4 md:gap-4">
         {/* the wrapper is animated, so the button keeps its own fade */}
         {photos.map((src, i) => (

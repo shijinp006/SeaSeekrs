@@ -40,7 +40,7 @@ const nextConfig: NextConfig = {
   // the cache of the last build keeps the old styles after globals.css has changed (Vercel keeps it between deployments)
   experimental: { turbopackFileSystemCacheForBuild: false },
   images: {
-    formats: ["image/avif", "image/webp"],
+    formats: ["image/webp"],
     // nothing else goes through the image optimiser: no other sites, no API routes, no query strings
     localPatterns: [
       { pathname: "/site/**", search: "" },

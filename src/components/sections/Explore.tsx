@@ -95,7 +95,7 @@ export function OnBoard({ site }: { site: Site }) {
   const onboard = site.content["home.onboard"];
   return (
     <>
-      <section id="on-board" data-tone="deep" data-stage="aside" data-shape="letterbox" className="stage">
+      <section id="on-board" data-tone="deep" data-stage="aside" data-shape="curtain" className="stage">
         <div className="stage-view pb-12 pt-[clamp(4rem,7.5vw,7.5rem)] max-lg:min-h-0 lg:py-20">
           <div className="container-x grid items-center gap-x-12 gap-y-10 lg:grid-cols-12">
             <div className="lg:col-span-7 lg:h-[min(70vh,42rem)]">

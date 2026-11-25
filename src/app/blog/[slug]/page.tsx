@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import Breadcrumb from "@/components/Breadcrumb";
 import JsonLd from "@/components/JsonLd";
 import Markdown from "@/components/Markdown";
+import PageTransition from "@/components/PageTransition";
+import SmoothScroll from "@/components/SmoothScroll";
 import SiteHeader from "@/components/SiteHeader";
 import { Footer } from "@/components/sections/Charter";
 import { book } from "@/lib/links";
@@ -51,7 +53,8 @@ export default async function PostPage({ params }: Props) {
         ]}
       />
       <SiteHeader site={site} home={false} />
-      <main id="top" tabIndex={-1} className="outline-none">
+      <PageTransition>
+<main id="top" tabIndex={-1} className="outline-none">
         <article>
           <header className="bg-navy-deep pb-16 pt-40 text-white md:pb-24 md:pt-52">
             <div className="mx-auto max-w-[52rem] px-4 md:px-12">
@@ -88,7 +91,9 @@ export default async function PostPage({ params }: Props) {
           </section>
         </article>
       </main>
+</PageTransition>
       <Footer site={site} home={false} />
+      <SmoothScroll />
     </>
   );
 }

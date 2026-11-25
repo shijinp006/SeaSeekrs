@@ -40,7 +40,7 @@ export default function BookNow({ className = BTN_GOLD, children = "Book now", .
 }
 
 const INPUT =
-  "w-full rounded-[0.8rem] border border-[#06222b33] bg-white px-4 py-3 text-base text-ink outline-none transition-[border-color,box-shadow] placeholder:text-[#4a646b99] focus:border-(--accent) focus:shadow-[0_0_0_3px_#08757a26] aria-invalid:border-[#a52a2a]";
+  "w-full rounded-[0.8rem] border border-[#17202a33] bg-white px-4 py-3 text-base text-ink outline-none transition-[border-color,box-shadow] placeholder:text-[#5a5f6799] focus:border-(--accent) focus:shadow-[0_0_0_3px_#cfa75f40] aria-invalid:border-[#a52a2a]";
 
 type Errors = Record<string, string>;
 

@@ -57,7 +57,7 @@ export function About({ site }: { site: Site }) {
   const about = site.content["home.about"];
   const [lead, ...more] = about.body;
   return (
-    <section id="about" data-tone="foam" data-stage="aside" data-shape="tilt" className="stage">
+    <section id="about" data-tone="foam" data-stage="aside" data-shape="settle" className="stage">
       <div className="stage-view py-[clamp(4rem,8vw,8rem)] max-lg:min-h-0 lg:py-20">
         <div className="container-x grid items-center gap-x-12 gap-y-12 lg:grid-cols-12">
           <div className="lg:col-span-7">

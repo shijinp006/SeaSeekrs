@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import JsonLd from "@/components/JsonLd";
+import PageTransition from "@/components/PageTransition";
+import SmoothScroll from "@/components/SmoothScroll";
 import SiteHeader from "@/components/SiteHeader";
 import Title, { Tagged } from "@/components/Title";
 import { Footer } from "@/components/sections/Charter";
@@ -23,7 +25,8 @@ export default async function Blog() {
     <>
       <JsonLd data={breadcrumbLd([{ name: "Blog", path: "/blog" }])} />
       <SiteHeader site={site} home={false} />
-      <main id="top" tabIndex={-1} className="outline-none">
+      <PageTransition>
+<main id="top" tabIndex={-1} className="outline-none">
         <section data-tone="deep" className="pb-16 pt-40 md:pb-24 md:pt-52">
           <div className="container-x">
             <Title heading={intro} as="h1" className="display t-hero" />
@@ -36,8 +39,8 @@ export default async function Blog() {
           <div className="container-x">
             {posts.length ? (
               <ul className="grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
-                {posts.map((p) => (
-                  <li key={p.slug}>
+                {posts.map((p, i) => (
+                  <li key={p.slug} data-aos="fade-up" data-aos-delay={(i % 3) * 130}>
                     <article>
                       <Link href={`/blog/${p.slug}`} className="group card-focus block">
                         <span className="relative block aspect-[3/2] overflow-hidden rounded-port bg-navy-deep/10">
@@ -67,7 +70,9 @@ export default async function Blog() {
           </div>
         </section>
       </main>
+</PageTransition>
       <Footer site={site} home={false} />
+      <SmoothScroll />
     </>
   );
 }
