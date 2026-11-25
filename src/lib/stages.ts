@@ -159,11 +159,20 @@ const word = (view: HTMLElement, pic: HTMLElement, text: string): Opening => {
  */
 export function stages() {
   const mm = gsap.matchMedia();
-  mm.add({ room: "(min-height: 600px)", wide: "(min-width: 1024px) and (min-height: 680px)", narrow: "(max-width: 767px)" }, (ctx) => {
+  mm.add({ room: "(min-height: 420px)", wide: "(min-width: 1024px) and (min-height: 480px)", narrow: "(max-width: 767px)" }, (ctx) => {
     const { narrow } = ctx.conditions as { narrow: boolean };
     gsap.utils.toArray<HTMLElement>("[data-stage]").forEach((stage) => {
       const view = stage.firstElementChild as HTMLElement;
       const { stage: kind, shape } = stage.dataset;
+      // text that does not fit on one screen (it can be changed in the studio) is not held: nothing may be cut off
+      if (held(view)) {
+        const box = view.getBoundingClientRect();
+        const parts = kind === "rail" ? [...view.children] : [...view.querySelectorAll("[data-step]")];
+        if (parts.some((el) => { const r = el.getBoundingClientRect(); return r.height > 0 && (r.top < box.top - 1 || r.bottom > box.bottom + 1); })) {
+          stage.dataset.flat = "";
+          ctx.add(() => () => void delete stage.dataset.flat);
+        }
+      }
 
       if (kind === "rail") {
         const rail = view.querySelector<HTMLElement>(".rail")!;

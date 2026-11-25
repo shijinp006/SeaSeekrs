@@ -235,21 +235,22 @@ button:disabled,
   padding-top: 6rem;
   padding-bottom: calc(clamp(2rem, 4.5vw, 4.5rem) + 100lvh - 100svh);
 }
-@media (min-height: 600px) and (prefers-reduced-motion: no-preference) {
-  .stage[data-stage="open"] {
+/* a 1080p laptop at Windows' usual 150% leaves a page only some 550px of height */
+@media (min-height: 420px) and (prefers-reduced-motion: no-preference) {
+  .stage[data-stage="open"]:not([data-flat]) {
     height: 235lvh;
   }
-  .stage[data-stage="open"] > .stage-view {
+  .stage[data-stage="open"]:not([data-flat]) > .stage-view {
     position: sticky;
     top: 0;
     height: 100lvh;
   }
 }
-@media (min-width: 1024px) and (min-height: 680px) and (prefers-reduced-motion: no-preference) {
-  .stage[data-stage="aside"] {
+@media (min-width: 1024px) and (min-height: 480px) and (prefers-reduced-motion: no-preference) {
+  .stage[data-stage="aside"]:not([data-flat]) {
     height: 205vh;
   }
-  .stage[data-stage="aside"] > .stage-view {
+  .stage[data-stage="aside"]:not([data-flat]) > .stage-view {
     position: sticky;
     top: 0;
     height: 100vh;
@@ -268,11 +269,11 @@ button:disabled,
   min-height: 0;
   overflow: visible;
 }
-@media (min-width: 1024px) and (min-height: 680px) and (prefers-reduced-motion: no-preference) {
-  .stage[data-stage="rail"] {
+@media (min-width: 1024px) and (min-height: 480px) and (prefers-reduced-motion: no-preference) {
+  .stage[data-stage="rail"]:not([data-flat]) {
     height: 215vh;
   }
-  .stage[data-stage="rail"] > .stage-view {
+  .stage[data-stage="rail"]:not([data-flat]) > .stage-view {
     position: sticky;
     top: 0;
     height: 100vh;
@@ -281,17 +282,59 @@ button:disabled,
     justify-content: center;
     padding-block: 4.5rem 1.5rem;
   }
-  .stage[data-stage="rail"] .rail {
+  .stage[data-stage="rail"]:not([data-flat]) .rail {
     margin-top: 2rem;
     scroll-snap-type: none;
   }
-  .stage[data-stage="rail"] .rail-card {
+  .stage[data-stage="rail"]:not([data-flat]) .rail-card {
     width: 36vw;
     max-width: none;
   }
-  .stage[data-stage="rail"] .rail-pic {
+  .stage[data-stage="rail"]:not([data-flat]) .rail-pic {
     aspect-ratio: auto;
     height: 52vh;
+  }
+}
+
+@media (min-width: 1024px) and (min-height: 480px) and (max-height: 679px) and (prefers-reduced-motion: no-preference) {
+  .stage {
+    --h-scale: 0.82;
+  }
+  .stage-words {
+    padding-top: 4.5rem;
+    padding-bottom: 1.75rem;
+  }
+  .stage .t-section {
+    font-size: 2rem;
+  }
+  .stage .t-lead {
+    font-size: 0.9375rem;
+    line-height: 1.6;
+  }
+  .stage[data-stage="aside"]:not([data-flat]) > .stage-view {
+    padding-block: 2.5rem;
+  }
+  .stage[data-stage="rail"]:not([data-flat]) > .stage-view {
+    padding-block: 2.5rem 1rem;
+  }
+  .stage[data-stage="rail"]:not([data-flat]) .rail {
+    margin-top: 1.25rem;
+  }
+  .stage[data-stage="rail"]:not([data-flat]) .rail + div {
+    margin-top: 1rem;
+  }
+  .stage[data-stage="rail"]:not([data-flat]) .rail-pic {
+    height: 44vh;
+  }
+}
+/* short phones: what is also said further down makes room */
+@media (max-width: 639px) and (max-height: 640px) {
+  .stage-words {
+    padding-top: 4rem;
+    padding-bottom: 1.5rem;
+  }
+  .stage-words > dl {
+    display: none;
   }
 }
 

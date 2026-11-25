@@ -37,6 +37,8 @@ const nextConfig: NextConfig = {
   devIndicators: false, // the badge of `next dev` lies over the page and its preview; errors are still shown
   cacheComponents: true,
   partialPrefetching: true,
+  // the cache of the last build keeps the old styles after globals.css has changed (Vercel keeps it between deployments)
+  experimental: { turbopackFileSystemCacheForBuild: false },
   images: {
     formats: ["image/avif", "image/webp"],
     // nothing else goes through the image optimiser: no other sites, no API routes, no query strings
