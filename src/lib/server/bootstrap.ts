@@ -12,7 +12,8 @@ import { seedUserSchema } from "./validate";
 async function siteImages() {
   const dir = path.join(process.cwd(), "public", "site");
   const known = new Set((await db.media.findMany({ where: { uploaded: false }, select: { path: true } })).map((m) => m.path));
-  const fresh = (await readdir(dir)).filter((f) => /^[a-z0-9-]+\.webp$/.test(f) && !known.has(`/site/${f}`));
+  // on Vercel the pictures are served from its network and are not next to the server: they are listed from a computer once
+  const fresh = (await readdir(dir).catch(() => [])).filter((f) => /^[a-z0-9-]+\.webp$/.test(f) && !known.has(`/site/${f}`));
   const data = await Promise.all(
     fresh.map(async (name) => {
       const file = path.join(dir, name);

@@ -38,6 +38,7 @@ const PORTRAIT = "(max-width: 767px) and (max-aspect-ratio: 3/4)";
  * Scroll-scrubbed film drawn to a canvas, so the camera moves exactly with the scroll in both directions (smooth on
  * iOS too, unlike seeking a <video>). The frames come from the device's video decoder through WebCodecs, which costs
  * next to no processor time; browsers without it get the same film as still pictures.
+ * A light version of the film (preview.bin) comes first, so it runs smoothly almost at once; the full one takes its place.
  */
 export default function ScrollFilm({ frames, pace: givenPace, src, captions: given, intro, length = 6, overlap = false }: Props) {
   // the same values in a new array are no reason to take the pin down and put it up again
@@ -68,7 +69,7 @@ export default function ScrollFilm({ frames, pace: givenPace, src, captions: giv
     let ext = "avif";
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const net = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
-    const thrifty = Boolean(net?.saveData || (net?.effectiveType && net.effectiveType !== "4g")); // a few stills will do
+    const thrifty = Boolean(net?.saveData || (net?.effectiveType && net.effectiveType !== "4g")); // the light film will do
 
     // ---- drawing: cover-fit like object-fit: cover, at most once per screen refresh.
     // A frame lasts some 20px of scroll, which shows as steps when scrolling slowly. So while the film moves
@@ -91,17 +92,23 @@ export default function ScrollFilm({ frames, pace: givenPace, src, captions: giv
       const cw = canvas.width, ch = canvas.height;
       const s = Math.max(cw / img.width, ch / img.height);
       const w = img.width * s, h = img.height * s;
-      ctx2d.imageSmoothingQuality = s < 0.75 ? "high" : "low"; // near its own size the cheap way looks the same
+      ctx2d.imageSmoothingQuality = s < 0.75 ? "high" : s > 1.1 ? "medium" : "low"; // near its own size the cheap way looks the same
       ctx2d.globalAlpha = alpha;
       ctx2d.drawImage(img, Math.round((cw - w) / 2), Math.round((ch - h) / 2), w, h);
     };
     const paint = () => {
       dirty = false;
       ctx2d.imageSmoothingEnabled = true; // resizing the canvas resets it
-      const i = Math.floor(playhead.f);
-      const a = bitmaps.get(i), b = bitmaps.get(i + 1);
-      const part = playhead.f - i;
+      // at the very top the poster, which is the first frame, is the better picture until the full film is there
+      if (playhead.f < 0.02 && light) return ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+      // the nearest pictures there are on either side: while the film is still coming in they may lie a little apart
+      let i = Math.floor(playhead.f), j = i + 1;
+      while (i > playhead.f - 8 && !bitmaps.has(i)) i--;
+      while (j < playhead.f + 8 && !bitmaps.has(j)) j++;
+      const a = bitmaps.get(i), b = bitmaps.get(j);
+      const part = (playhead.f - i) / (j - i);
       const mix = part + (Math.round(part) - part) * rest;
+      if (a && b && mix >= 0.98) return put(b, 1);
       if (a && b && mix > 0.02 && mix < 0.98) {
         put(a, 1);
         put(b, mix);
@@ -130,6 +137,7 @@ export default function ScrollFilm({ frames, pace: givenPace, src, captions: giv
         slowFor = 0;
         pump();
       }
+      lead = Math.min(24, Math.round(speed * 4));
       copySome(Math.ceil(speed) + 1);
       const was = rest;
       // quick moves need no in-between pictures; they would only blur
@@ -143,16 +151,22 @@ export default function ScrollFilm({ frames, pace: givenPace, src, captions: giv
 
     // ---- decoding: a window of frames around the playhead is kept decoded, mostly ahead of it
     const AHEAD = 11, BEHIND = 4;
+    let lead = 0; // the faster it goes, the further ahead the next pictures are made
     const DECODERS = Math.min(4, Math.max(2, (navigator.hardwareConcurrency || 4) >> 1)); // leave room for the page itself
     const inWindow = (i: number, slack = 0) => {
       const d = (i - current) * heading;
-      return i === current || (visible && d <= AHEAD + slack && d >= -BEHIND - slack);
+      return i === current || (visible && d <= AHEAD + lead + slack && d >= -BEHIND - slack);
     };
 
     // ---- the film: groups of `gop` frames, each starting on a key frame, decoded one group at a time
-    let units: (Uint8Array<ArrayBuffer> | undefined)[] | null = null; // the pieces downloaded so far; null: using stills
+    type Units = (Uint8Array<ArrayBuffer> | undefined)[];
+    let units: Units | null = null; // the pieces downloaded so far; null: using stills
     let gop = 4;
     let config: VideoDecoderConfig;
+    let light = true; // playing the light version
+    let full: { units: Units; gop: number; config: VideoDecoderConfig } | null = null; // downloaded, to be played from now on
+    let soft = new Set<number>(); // pictures left from the light version
+    const has = (i: number) => bitmaps.has(i) && !soft.has(i);
     let decoder: VideoDecoder | null = null;
     let waiting: VideoFrame[] = []; // decoded, not yet copied
     let allCopied: (() => void) | null = null;
@@ -167,7 +181,7 @@ export default function ScrollFilm({ frames, pace: givenPace, src, captions: giv
         output: (frame) => {
           made++;
           const i = Math.round(frame.timestamp / 1000);
-          if (id !== batch || bitmaps.has(i) || !(inWindow(i, gop) || !bitmaps.size)) return frame.close();
+          if (id !== batch || has(i) || !(inWindow(i, gop) || !bitmaps.size)) return frame.close();
           waiting.push(frame);
         },
         error: () => {}, // flush() rejects as well
@@ -180,7 +194,7 @@ export default function ScrollFilm({ frames, pace: givenPace, src, captions: giv
      * a refresh, which shows as a small hitch every few frames.
      */
     const copySome = (most: number) => {
-      if (!bitmaps.has(current)) most = waiting.length; // nothing to show yet: hurry
+      if (!bitmaps.has(current) && !bitmaps.has(current + heading)) most = waiting.length; // nothing to show yet: hurry
       while (most > 0 && waiting.length) {
         const frame = waiting.shift()!;
         const id = batch, i = Math.round(frame.timestamp / 1000);
@@ -193,7 +207,9 @@ export default function ScrollFilm({ frames, pace: givenPace, src, captions: giv
         copying++;
         createImageBitmap(frame)
           .then((img) => {
-            if (id !== batch || bitmaps.has(i)) return img.close();
+            if (id !== batch || has(i)) return img.close();
+            bitmaps.get(i)?.close();
+            soft.delete(i);
             bitmaps.set(i, img);
             draw();
           })
@@ -213,9 +229,9 @@ export default function ScrollFilm({ frames, pace: givenPace, src, captions: giv
     /** The next group worth decoding, and how many of its frames */
     const nextGroup = (): [number, number] | null => {
       if (!units) return null;
-      const here = Math.floor(current / gop);
+      const here = Math.floor(Math.min(frames - 1, Math.max(0, current + heading * Math.round(lead / 2))) / gop);
       const last = Math.floor((frames - 1) / gop);
-      const reach = Math.ceil(AHEAD / gop) + 1;
+      const reach = Math.ceil((AHEAD + lead) / gop) + 1;
       for (let d = 0; d <= reach; d++) {
         for (const g of d ? [here + d * heading, here - d * heading] : [here]) {
           if (g < 0 || g > last) continue;
@@ -225,7 +241,7 @@ export default function ScrollFilm({ frames, pace: givenPace, src, captions: giv
           for (let k = 0; k < n; k++) {
             const i = g * gop + k;
             if (i % stride && i !== frames - 1 && bitmaps.size) continue;
-            if (inWindow(i) && !bitmaps.has(i)) return [g, n];
+            if (inWindow(i) && !has(i)) return [g, n];
           }
         }
       }
@@ -242,7 +258,18 @@ export default function ScrollFilm({ frames, pace: givenPace, src, captions: giv
       working = true;
       const id = batch;
       try {
-        for (let next = nextGroup(); next && id === batch; next = nextGroup()) {
+        for (;;) {
+          if (full) {
+            // between two groups: nothing is on its way that belongs to the light version
+            ({ units, gop, config } = full);
+            full = null;
+            light = false;
+            if (decoder && decoder.state !== "closed") decoder.close();
+            decoder = null;
+            soft = new Set(bitmaps.keys());
+          }
+          const next = nextGroup();
+          if (!next || id !== batch) break;
           const [g, n] = next;
           const dec = openDecoder();
           made = 0;
@@ -259,7 +286,8 @@ export default function ScrollFilm({ frames, pace: givenPace, src, captions: giv
       } catch {
         if (id === batch && ++failures > 3) {
           dropWaiting();
-          units = null; // this device's decoder won't have it
+          units = full = null; // this device's decoder won't have it
+          light = false;
           loadStills();
         }
       }
@@ -274,6 +302,7 @@ export default function ScrollFilm({ frames, pace: givenPace, src, captions: giv
         if (i !== nearest && !inWindow(i, gop)) {
           img.close();
           bitmaps.delete(i);
+          soft.delete(i);
         }
       }
       if (units) {
@@ -319,28 +348,31 @@ export default function ScrollFilm({ frames, pace: givenPace, src, captions: giv
       const { signal } = aborter;
       if (decoder && decoder.state !== "closed") decoder.close();
       decoder = null;
-      units = null;
+      units = full = null;
+      light = true;
+      soft.clear();
       failures = 0;
-      if (reduce || thrifty || !("VideoDecoder" in window)) return loadStills();
-      try {
-        const dir = portrait.matches ? src.sm : src.lg;
-        const index: FilmIndex = await fetch(`${dir}/film.json`, { signal }).then((r) => r.json());
-        config = { codec: index.codec, codedWidth: index.width, codedHeight: index.height, optimizeForLatency: true };
-        const { supported } = await VideoDecoder.isConfigSupported(config);
-        if (id !== batch) return;
-        if (!supported || index.order.length !== frames) return loadStills();
-        const body = (await fetch(`${dir}/film.bin`, { signal, priority: "low" })).body!.getReader();
-        if (id !== batch) return;
-        bitmaps.forEach((img) => img.close());
-        bitmaps = new Map();
-        gop = index.gop;
-        const pieces: (Uint8Array<ArrayBuffer> | undefined)[] = new Array(frames);
-        units = pieces;
+      if (reduce || !("VideoDecoder" in window)) return loadStills();
+      const dir = portrait.matches ? src.sm : src.lg;
+      /** Reads one version of the film; `open` gets its pieces before they are there, `each` is told of every one */
+      const read = async (name: string, priority: RequestPriority, open: (f: NonNullable<typeof full>) => void, each: (i: number) => void) => {
+        const index: FilmIndex = await fetch(`${dir}/${name}.json`, { signal }).then((r) => r.json());
+        const film = {
+          units: new Array(frames) as Units,
+          gop: index.gop,
+          config: { codec: index.codec, codedWidth: index.width, codedHeight: index.height, optimizeForLatency: true },
+        };
+        const { supported } = await VideoDecoder.isConfigSupported(film.config);
+        if (!supported || index.order.length !== frames) throw new Error("not playable");
+        const body = (await fetch(`${dir}/${name}.bin`, { signal, priority })).body!.getReader();
+        if (id !== batch) return null;
+        open(film);
         let k = 0, filled = 0;
         let piece = new Uint8Array(index.sizes[0]);
         for (;;) {
           const { done, value } = await body.read();
-          if (done || id !== batch) return;
+          if (id !== batch) return null;
+          if (done) return k === frames ? film : null;
           let from = 0;
           while (from < value.length && k < frames) {
             const part = value.subarray(from, from + piece.length - filled);
@@ -349,14 +381,38 @@ export default function ScrollFilm({ frames, pace: givenPace, src, captions: giv
             from += part.length;
             if (filled < piece.length) break;
             const i = index.order[k++];
-            pieces[i] = piece;
+            film.units[i] = piece;
             filled = 0;
             if (k < frames) piece = new Uint8Array(index.sizes[k]);
-            if (!bitmaps.size || inWindow(i)) work();
+            each(i);
           }
         }
+      };
+      try {
+        await read(
+          "preview",
+          "auto",
+          (film) => {
+            bitmaps.forEach((img) => img.close());
+            bitmaps = new Map();
+            ({ units, gop, config } = film);
+          },
+          (i) => {
+            if (units && (!bitmaps.size || inWindow(i))) work();
+          },
+        );
       } catch {
         if (id === batch && !units) loadStills();
+        return;
+      }
+      if (id !== batch || !units || thrifty) return;
+      try {
+        const film = await read("film", "low", () => {}, () => {});
+        if (!film || id !== batch || !units) return;
+        full = film;
+        work();
+      } catch {
+        // the light version plays on
       }
     };
 
@@ -367,6 +423,8 @@ export default function ScrollFilm({ frames, pace: givenPace, src, captions: giv
     if ((frames - 1) % STILLS) order.push(frames - 1);
     const loadStills = async () => {
       const id = ++batch;
+      light = false;
+      soft.clear();
       aborter.abort();
       aborter = new AbortController();
       const { signal } = aborter;

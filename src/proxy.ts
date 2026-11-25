@@ -1,20 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/lib/server/db";
 import { COOKIE, verifyToken } from "@/lib/server/jwt";
+import { sameOrigin } from "@/lib/server/origin";
 import { pagesOf, readServicesPage, services } from "@/lib/services";
 
 // Middleware (called Proxy since Next.js 16) for the SEO studio: checks the JWT in the session cookie before any studio
 // page or API route runs. The database session and the role are checked again in the page / route itself.
 
 const OPEN = new Set(["/studio/login", "/api/studio/auth/login"]);
-
-/** A browser sends the Origin of the page a write comes from: it must be this site */
-function sameOrigin(request: NextRequest) {
-  const origin = request.headers.get("origin");
-  if (!origin) return request.headers.get("sec-fetch-site") === "same-origin";
-  // not X-Forwarded-Host: anyone can send that
-  return URL.canParse(origin) && new URL(origin).host === request.headers.get("host");
-}
 
 function secured(response: NextResponse) {
   response.headers.set("Cache-Control", "no-store");

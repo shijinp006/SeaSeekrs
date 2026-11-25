@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import BookNow from "@/components/BookNow";
 import Breadcrumb from "@/components/Breadcrumb";
 import Gallery from "@/components/Gallery";
 import { Check } from "@/components/Icons";
 import JsonLd from "@/components/JsonLd";
 import ServiceCard from "@/components/ServiceCard";
 import SiteHeader from "@/components/SiteHeader";
+import SmoothScroll from "@/components/SmoothScroll";
 import { Footer } from "@/components/sections/Charter";
 import { book, whatsapp } from "@/lib/links";
-import { BTN_GOLD, LINK } from "@/lib/motion";
+import { LINK } from "@/lib/motion";
 import { breadcrumbLd, pageMetadata, serviceLd } from "@/lib/server/seo";
 import { getSite, publishedSite } from "@/lib/server/site";
 import { getService, moreServices, pageOf, servicesHref, servicesOf, yachtsFor } from "@/lib/services";
@@ -95,9 +97,11 @@ export default async function ServicePage({ params }: Props) {
                 </div>
                 <Checks items={service.points} className="mt-7 space-y-3 border-t border-(--rule) pt-7" />
                 <div className="mt-9 flex flex-wrap items-center gap-x-8 gap-y-4">
-                  <a href={book(business, service.title)} {...out} className={BTN_GOLD}>
-                    Book now
-                  </a>
+                  <BookNow
+                    service={{ slug: service.slug, title: service.title }}
+                    yachts={yachtsFor(service, site).map((y) => y.title)}
+                    chat={book(business, service.title)}
+                  />
                   <a href={whatsapp(business)} {...out} className={LINK}>
                     Ask on WhatsApp
                   </a>
@@ -162,6 +166,7 @@ export default async function ServicePage({ params }: Props) {
         </div>
       </main>
       <Footer site={site} home={false} />
+      <SmoothScroll key={service.slug} />
     </>
   );
 }

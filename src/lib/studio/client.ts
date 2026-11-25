@@ -34,8 +34,33 @@ export type MediaItem = {
   size: number;
 };
 
-export async function upload(file: File, alt = "") {
-  if (file.size > 8 * 1024 * 1024) return { ok: false as const, error: "The picture is larger than 8 MB" };
+const MOST = 4 * 1024 * 1024; // Vercel takes no request over 4.5 MB
+
+/** Large photos are made smaller in the browser first, to the size the server would keep anyway; null if it cannot read them */
+async function lighter(file: File) {
+  if (file.size <= MOST) return file;
+  try {
+    const picture = await createImageBitmap(file);
+    const scale = Math.min(1, 2400 / picture.width);
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(picture.width * scale);
+    canvas.height = Math.round(picture.height * scale);
+    canvas.getContext("2d")!.drawImage(picture, 0, 0, canvas.width, canvas.height);
+    picture.close();
+    for (const quality of [0.92, 0.8, 0.65]) {
+      const blob = await new Promise<Blob | null>((done) => canvas.toBlob(done, "image/webp", quality));
+      if (blob && blob.size <= MOST) return new File([blob], file.name.replace(/\.\w+$/, "") + (blob.type === "image/webp" ? ".webp" : ".png"), { type: blob.type });
+    }
+  } catch {
+    // not a picture this browser can read
+  }
+  return null;
+}
+
+export async function upload(original: File, alt = "") {
+  if (original.size > 40 * 1024 * 1024) return { ok: false as const, error: "The picture is larger than 40 MB" };
+  const file = await lighter(original);
+  if (!file) return { ok: false as const, error: "The picture is larger than 4 MB and could not be made smaller. Use a smaller one." };
   const form = new FormData();
   form.set("alt", alt); // before the file, so multer has it when the file arrives
   form.set("file", file);

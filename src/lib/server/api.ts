@@ -29,6 +29,8 @@ function failure(error: unknown) {
   const code = (error as { code?: string })?.code;
   if (code === "P2002") return json({ error: "That is already in use" }, 409);
   if (code === "P2025") return json({ error: "Not found" }, 404);
+  // …or two changes met at the same moment, and the database let only one through
+  if (code === "P2034") return json({ error: "Something else was being saved at the same moment. Please try again." }, 409);
   log.error({ err: error }, "studio api failed");
   return json({ error: "Something went wrong on the server" }, 500);
 }

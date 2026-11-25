@@ -2,9 +2,11 @@ import Image from "next/image";
 import Link from "next/link";
 import Rows from "@/components/studio/Rows";
 import { CARD } from "@/components/studio/styles";
-import { Icon, type IconName } from "@/components/studio/ui";
+import { Badge, Icon, type IconName } from "@/components/studio/ui";
 import { tours } from "@/lib/content";
 
+import { STATUS_LABEL } from "@/lib/booking";
+import { countNewBookings, latestBookings } from "@/lib/server/bookings";
 import { siteUrl } from "@/lib/server/site";
 import { requireUser } from "@/lib/server/session";
 import { getMedia, getSections, getStudioPosts, postDraft } from "@/lib/server/studio";
@@ -26,7 +28,14 @@ const tools = () => {
 
 export default async function Overview() {
   const user = await requireUser();
-  const [sections, all, posts] = await Promise.all([getSections(), getMedia(), getStudioPosts()]);
+  const admin = user.role === "ADMIN";
+  const [sections, all, posts, newBookings, bookings] = await Promise.all([
+    getSections(),
+    getMedia(),
+    getStudioPosts(),
+    admin ? countNewBookings() : 0,
+    admin ? latestBookings() : [],
+  ]);
   const media = all.filter((m) => !m.decorative);
 
   const pageRows = pages.map((p) => {
@@ -59,6 +68,7 @@ export default async function Overview() {
   const issues = [...pageRows, ...postRows].reduce((n, r) => n + r.issues.length, 0);
   const missing = media.filter((m) => altIssue(m.draftAlt ?? m.alt)).length;
   const stats: { label: string; value: string; icon: IconName; href: string; warn?: boolean }[] = [
+    ...(admin ? [{ label: "New bookings", value: String(newBookings), icon: "calendar" as const, href: "/studio/bookings?status=NEW", warn: newBookings > 0 }] : []),
     { label: "Pages and posts", value: String(pageRows.length + postRows.length), icon: "page", href: "#pages" },
     { label: "SEO issues", value: String(issues), icon: "warn", href: "#pages", warn: issues > 0 },
     { label: "Images missing good alt text", value: `${missing} / ${media.length}`, icon: "image", href: "/studio/images", warn: missing > 0 },
@@ -78,7 +88,7 @@ export default async function Overview() {
         </div>
       </div>
 
-      <ul className="grid gap-4 sm:grid-cols-3">
+      <ul className={`grid gap-4 sm:grid-cols-2 ${admin ? "xl:grid-cols-4" : "lg:grid-cols-3"}`}>
         {stats.map((s) => (
           <li key={s.label}>
             <Link href={s.href} className={`${CARD} flex h-full items-center gap-4 p-5 transition-colors hover:border-(--accent)`}>
@@ -93,6 +103,39 @@ export default async function Overview() {
           </li>
         ))}
       </ul>
+
+      {admin && (
+        <section className={`${CARD} mt-6`}>
+          <div className="flex items-center justify-between gap-4 border-b border-(--rule) px-5 py-4">
+            <h2 className="font-serif text-[1.25rem]">Latest bookings</h2>
+            <Link href="/studio/bookings" className="text-[0.875rem] text-(--accent) underline-offset-4 hover:underline">
+              See all
+            </Link>
+          </div>
+          {bookings.length ? (
+            <ul className="divide-y divide-(--rule)">
+              {bookings.map((b) => (
+                <li key={b.id}>
+                  <Link
+                    href={`/studio/bookings?q=${b.ref}`}
+                    className="grid gap-x-6 gap-y-1 px-5 py-3.5 text-[0.9375rem] transition-colors hover:bg-ink/3 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1.4fr)_auto] sm:items-center"
+                  >
+                    <span className="min-w-0 truncate">
+                      <span className="font-medium">{b.name}</span> <span className="text-(--mute)">{b.phone}</span>
+                    </span>
+                    <span className="min-w-0 truncate text-(--mute)">
+                      {b.service}, {b.when}, {b.guests} guests
+                    </span>
+                    <Badge tone={b.status === "NEW" ? "warn" : b.status === "CONFIRMED" ? "good" : "calm"}>{STATUS_LABEL[b.status]}</Badge>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="px-5 py-6 text-(--mute)">No bookings yet.</p>
+          )}
+        </section>
+      )}
 
       <div id="pages" className="mt-6 scroll-mt-24 space-y-6">
         <Rows title="Pages" rows={pageRows} />

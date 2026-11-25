@@ -3,6 +3,7 @@ import JsonLd from "@/components/JsonLd";
 import Pagination from "@/components/Pagination";
 import ServiceCard from "@/components/ServiceCard";
 import SiteHeader from "@/components/SiteHeader";
+import SmoothScroll from "@/components/SmoothScroll";
 import { Footer } from "@/components/sections/Charter";
 import { breadcrumbLd, serviceListLd } from "@/lib/server/seo";
 import { getSite } from "@/lib/server/site";
@@ -44,6 +45,7 @@ export default async function ServiceList({ page }: { page: number }) {
         </section>
       </main>
       <Footer site={site} home={false} />
+      <SmoothScroll key={page} />
     </>
   );
 }

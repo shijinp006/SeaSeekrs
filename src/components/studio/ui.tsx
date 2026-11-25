@@ -33,6 +33,7 @@ const paths = {
   phone: "M8 3h8a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM11 18h2",
   screen: "M3 5h18v11H3zM9 20h6M12 16v4",
   refresh: "M20 11a8 8 0 0 0-14.5-4L4 9M4 4v5h5M4 13a8 8 0 0 0 14.5 4l1.5-2M20 20v-5h-5",
+  calendar: "M4 6h16v14H4zM4 10.5h16M8.5 3.5V8M15.5 3.5V8M8.5 14.5h3",
   search: "M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4",
 };
 export type IconName = keyof typeof paths;

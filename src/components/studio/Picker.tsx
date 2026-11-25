@@ -51,7 +51,7 @@ export default function Picker({ onPick, onClose }: { onPick: (item: MediaItem) 
         <button type="button" className={GOLD} disabled={busy} onClick={() => file.current?.click()}>
           <Icon name="upload" /> {busy ? "Uploading…" : "Upload a picture"}
         </button>
-        <span className="text-[0.8125rem] text-(--mute)">JPG, PNG, WebP or AVIF, up to 8 MB</span>
+        <span className="text-[0.8125rem] text-(--mute)">JPG, PNG, WebP or AVIF</span>
       </div>
       {error && (
         <div className="mt-3">

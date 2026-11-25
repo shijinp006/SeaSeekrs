@@ -1,5 +1,6 @@
 import "server-only";
 import { z } from "zod";
+import { HOURS, MAX_GUESTS, STATUSES } from "@/lib/booking";
 import type { Field, Section } from "@/lib/studio/fields";
 
 const IMAGE_PATH = /^\/(site|media)\/[a-z0-9-]+\.webp$/;
@@ -117,6 +118,27 @@ export const userPatchSchema = z
   .refine((v) => Object.keys(v).length > 0, "Nothing to change");
 export const seedUserSchema = z.strictObject({ email, password });
 export const uuidSchema = z.uuid();
+
+/** The booking form of a service */
+export const bookingSchema = z.strictObject({
+  service: slug,
+  yacht: oneLine(191, true).default(""),
+  name: oneLine(80),
+  email,
+  phone: oneLine(30).refine((s) => /^\+?[\d\s().-]+$/.test(s) && /^\d{7,15}$/.test(s.replace(/\D/g, "")), "Not a valid phone number"),
+  date: z.iso.date("Choose a day"),
+  time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Choose a time"),
+  hours: z.number().refine((h) => (HOURS as readonly number[]).includes(h), "Choose from the list"),
+  guests: z.number("How many guests?").int("A whole number").min(1, "At least 1").max(MAX_GUESTS, `At most ${MAX_GUESTS}. For more, write to us on WhatsApp.`),
+  message: plain(1000, true).default(""),
+  /** hidden from people */
+  website: z.string().max(200).default(""),
+});
+
+export const bookingPatchSchema = z
+  .strictObject({ status: z.enum(STATUSES), note: oneLine(1000, true) })
+  .partial()
+  .refine((v) => Object.keys(v).length > 0, "Nothing to change");
 
 /** { "items.2.title": "This is required" } — the first problem of each field */
 export const issuesOf = (error: z.ZodError) =>

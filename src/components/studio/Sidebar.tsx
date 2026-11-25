@@ -9,10 +9,15 @@ import { send } from "@/lib/studio/client";
 import { pages } from "@/lib/studio/fields";
 import { Icon, type IconName } from "./ui";
 
-type Item = { href: string; label: string; icon: IconName; exact?: boolean };
+type Item = { href: string; label: string; icon: IconName; exact?: boolean; count?: number };
 
-const groups = (admin: boolean): { title?: string; items: Item[] }[] => [
-  { items: [{ href: "/studio", label: "Overview", icon: "gauge", exact: true }] },
+const groups = (admin: boolean, newBookings: number): { title?: string; items: Item[] }[] => [
+  {
+    items: [
+      { href: "/studio", label: "Overview", icon: "gauge", exact: true },
+      ...(admin ? [{ href: "/studio/bookings", label: "Bookings", icon: "calendar" as const, count: newBookings }] : []),
+    ],
+  },
   {
     title: "Pages",
     items: pages.map((p) => ({ href: `/studio/pages/${p.id}`, label: p.label, icon: "page", exact: true })),
@@ -35,7 +40,7 @@ const groups = (admin: boolean): { title?: string; items: Item[] }[] => [
   },
 ];
 
-export default function Sidebar({ user }: { user: { name: string; role: "ADMIN" | "SEO" } }) {
+export default function Sidebar({ user, newBookings }: { user: { name: string; role: "ADMIN" | "SEO" }; newBookings: number }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -73,7 +78,7 @@ export default function Sidebar({ user }: { user: { name: string; role: "ADMIN" 
           </div>
         </div>
         <nav aria-label="Studio" className="flex-1 overflow-y-auto px-3 py-4 [scrollbar-color:#ffffff33_transparent] [scrollbar-width:thin]">
-          {groups(user.role === "ADMIN").map((g, i) => (
+          {groups(user.role === "ADMIN", newBookings).map((g, i) => (
             <div key={i} className={i ? "mt-5" : ""}>
               {g.title && <p className="px-3 pb-1.5 text-[0.75rem] text-aqua/90">{g.title}</p>}
               <ul>
@@ -91,6 +96,12 @@ export default function Sidebar({ user }: { user: { name: string; role: "ADMIN" 
                       >
                         <Icon name={item.icon} className={`size-4 ${here ? "text-gold" : ""}`} />
                         {item.label}
+                        {item.count ? (
+                          <span className="ml-auto rounded-full bg-gold px-2 py-0.5 text-[0.75rem] font-semibold leading-tight text-ink">
+                            {item.count}
+                            <span className="sr-only"> new</span>
+                          </span>
+                        ) : null}
                       </Link>
                     </li>
                   );

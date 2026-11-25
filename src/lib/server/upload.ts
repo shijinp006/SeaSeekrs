@@ -1,15 +1,22 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import path from "node:path";
 import { Readable } from "node:stream";
 import type { ReadableStream } from "node:stream/web";
+import { del, get, put } from "@vercel/blob";
 import multer from "multer";
 import sharp, { type OutputInfo } from "sharp";
 import { ApiError } from "./api";
 
-export const uploadDir = () => path.resolve(/*turbopackIgnore: true*/ process.cwd(), process.env.UPLOAD_DIR || "uploads");
+// On Vercel nothing can be kept on disk: uploads go to the Blob store connected to the project. Elsewhere: a folder.
+const inBlob = () => Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
+/** As the store was made. Visitors get the pictures from /media/…, so it can be private */
+const access = () => (process.env.BLOB_ACCESS === "public" ? ("public" as const) : ("private" as const));
+const blobName = (name: string) => `uploads/${name}`;
+
+const uploadDir = () => path.resolve(/*turbopackIgnore: true*/ process.cwd(), process.env.UPLOAD_DIR || "uploads");
 export const UPLOAD_NAME = /^[a-f0-9]{32}\.webp$/;
 
 const MAX_BYTES = 8 * 1024 * 1024;
@@ -72,12 +79,26 @@ export async function storeImage(bytes: Buffer) {
     throw new ApiError(415, "That file is not a picture we can read");
   }
   const name = `${randomBytes(16).toString("hex")}.webp`;
-  await mkdir(uploadDir(), { recursive: true });
-  await writeFile(path.join(uploadDir(), name), image.data, { flag: "wx" });
+  if (inBlob()) await put(blobName(name), image.data, { access: access(), contentType: "image/webp", cacheControlMaxAge: 31536000 });
+  else {
+    if (process.env.VERCEL) throw new ApiError(503, "Connect a Blob store to the Vercel project to upload pictures");
+    await mkdir(uploadDir(), { recursive: true });
+    await writeFile(path.join(uploadDir(), name), image.data, { flag: "wx" });
+  }
   return { path: `/media/${name}`, width: image.info.width, height: image.info.height, size: image.info.size };
 }
 
 export async function removeImage(src: string) {
   const name = path.posix.basename(src);
-  if (UPLOAD_NAME.test(name)) await rm(path.join(uploadDir(), name), { force: true });
+  if (!UPLOAD_NAME.test(name)) return;
+  if (inBlob()) await del(blobName(name));
+  else await rm(path.join(uploadDir(), name), { force: true });
+}
+
+/** An uploaded picture, or null if there is none of that name */
+export async function readImage(name: string) {
+  if (!UPLOAD_NAME.test(name)) return null;
+  if (!inBlob()) return readFile(path.join(uploadDir(), name)).then((data) => new Uint8Array(data), () => null);
+  const found = await get(blobName(name), { access: access() });
+  return found?.statusCode === 200 ? found.stream : null;
 }

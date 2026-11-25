@@ -4,7 +4,8 @@ export async function register() {
   const [{ bootstrap, refreshOnce }, { log }] = await Promise.all([import("@/lib/server/bootstrap"), import("@/lib/server/log")]);
   try {
     await bootstrap();
-    if (process.env.NODE_ENV === "production") setTimeout(refreshOnce, 1500);
+    // Vercel makes the pages anew with every deployment, and there is no server of our own to call
+    if (process.env.NODE_ENV === "production" && !process.env.VERCEL) setTimeout(refreshOnce, 1500);
   } catch (error) {
     log.error({ err: error }, "could not prepare the database: is it running, and migrated?");
   }
