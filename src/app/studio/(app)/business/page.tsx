@@ -10,7 +10,7 @@ export const instant = false;
 export const metadata: Metadata = { title: "Business Info" };
 
 export default async function Business() {
-  await requireUser();
+  await requireUser("SEO");
   const state = (await getSections()).business;
   return (
     <>

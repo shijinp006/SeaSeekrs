@@ -21,7 +21,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 }
 
 export default async function EditPage(props: Props) {
-  await requireUser();
+  await requireUser("SEO");
   const page = await find(props);
   const [sections, media] = await Promise.all([getSections(), getMedia()]);
   return (

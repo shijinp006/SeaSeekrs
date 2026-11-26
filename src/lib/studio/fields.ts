@@ -11,6 +11,8 @@ export type Field = {
   /** items, for strings / images / list */
   minItems?: number;
   maxItems?: number;
+  /** for a long list: how many items the editor shows at a time */
+  perPage?: number;
   /** what one item of a list is called */
   item?: string;
   of?: Field[];
@@ -236,7 +238,7 @@ export const pages: Page[] = [
               text("seoTitle", "Page title", { max: 120, optional: true, hint: "For Google. Empty: made from the name." }),
               area("seoDescription", "Meta description", { max: 320, optional: true, hint: "For Google. Empty: made from the summary." }),
             ],
-            { maxItems: 40 },
+            { maxItems: 40, perPage: 6 },
           ),
         ],
       },
@@ -284,6 +286,7 @@ export const businessSection: Section = {
     text("phone", "Phone", { max: 30 }),
     text("whatsapp", "WhatsApp number", { max: 20, hint: "Digits only, with the country code" }),
     url("instagram", "Instagram"),
+    url("facebook", "Facebook", { optional: true, hint: "The page address; the Facebook icon shows once it is set" }),
     url("youtube", "YouTube"),
     url("trustpilot", "Trustpilot"),
     url("google", "Google review link"),

@@ -190,12 +190,6 @@ export const getService = (site: Site, slug: string) => servicesOf(site).find((s
 /** The page of the list a service is on */
 export const pageOf = (site: Site, s: Service) => Math.floor(servicesOf(site).indexOf(s) / SERVICES_PER_PAGE) + 1;
 
-export function moreServices(site: Site, s: Service, count: number) {
-  const services = servicesOf(site);
-  const at = services.indexOf(s);
-  return Array.from({ length: Math.min(count, services.length - 1) }, (_, i) => services[(at + 1 + i) % services.length]);
-}
-
 /** Their yacht as it is published now; every yacht if none has that name any more */
 export function yachtsFor({ yacht }: Service, site: Site) {
   const all = site.content["home.yachts"].items;

@@ -4,10 +4,10 @@ import { COOKIE, verifyToken } from "@/lib/server/jwt";
 import { sameOrigin } from "@/lib/server/origin";
 import { pagesOf, readServicesPage, services } from "@/lib/services";
 
-// Middleware (called Proxy since Next.js 16) for the SEO studio: checks the JWT in the session cookie before any studio
+// Middleware (called Proxy since Next.js 16) for the SEO studio (/studio) and the admin panel (/admin): checks the JWT in the session cookie before any studio
 // page or API route runs. The database session and the role are checked again in the page / route itself.
 
-const OPEN = new Set(["/studio/login", "/api/studio/auth/login"]);
+const OPEN = new Set(["/studio/login", "/admin/login", "/api/studio/auth/login"]);
 
 function secured(response: NextResponse) {
   response.headers.set("Cache-Control", "no-store");
@@ -55,9 +55,10 @@ export async function proxy(request: NextRequest) {
   if (OPEN.has(pathname) || (await verifyToken(request.cookies.get(COOKIE)?.value))) return secured(NextResponse.next());
 
   if (api) return secured(NextResponse.json({ error: "Please sign in again" }, { status: 401 }));
-  const login = new URL("/studio/login", request.url);
-  if (pathname !== "/studio") login.searchParams.set("next", pathname);
+  const area = top === "admin" ? "/admin" : "/studio"; // each area has a sign-in page of its own
+  const login = new URL(`${area}/login`, request.url);
+  if (pathname !== area) login.searchParams.set("next", pathname);
   return secured(NextResponse.redirect(login));
 }
 
-export const config = { matcher: ["/studio/:path*", "/api/studio/:path*", "/blog/:slug", "/services/:slug", "/services/page/:page"] };
+export const config = { matcher: ["/studio/:path*", "/admin/:path*", "/api/studio/:path*", "/blog/:slug", "/services/:slug", "/services/page/:page"] };

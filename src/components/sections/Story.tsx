@@ -1,9 +1,11 @@
 import Image from "next/image";
+import Link from "next/link";
+import { ViewTransition } from "react";
 import Frame from "@/components/Frame";
 import { CardArrow } from "@/components/Icons";
-import Rail from "@/components/Rail";
 import Title, { headingStyle, Tagged } from "@/components/Title";
 import { book, whatsapp } from "@/lib/links";
+import { tourSlug } from "@/lib/tours";
 import { BTN_GOLD, LINK } from "@/lib/motion";
 import type { Site } from "@/lib/server/site";
 
@@ -57,17 +59,17 @@ export function About({ site }: { site: Site }) {
   const about = site.content["home.about"];
   const [lead, ...more] = about.body;
   return (
-    <section id="about" data-tone="foam" data-stage="aside" data-shape="settle" className="stage">
-      <div className="stage-view py-[clamp(4rem,8vw,8rem)] max-lg:min-h-0 lg:py-20">
+    <section id="about" data-tone="foam" className="py-[clamp(2rem,3.5vw,3.5rem)]">
+      <div>
         <div className="container-x grid items-center gap-x-12 gap-y-12 lg:grid-cols-12">
           <div className="lg:col-span-7">
-            <Title heading={about} as="h2" data-step="fade-up" className="display t-section" />
-            <Tagged tag={about.bodyTag} as="p" data-step="fade-right" className="mt-6 max-w-[38em] t-lead [text-wrap:pretty]">
+            <Title heading={about} as="h2" data-lines className="display t-section" />
+            <Tagged tag={about.bodyTag} as="p" data-aos="fade-up" className="mt-6 max-w-[38em] t-lead [text-wrap:pretty]">
               {lead}
             </Tagged>
             <div className="mt-6 grid max-w-[46rem] gap-8 leading-relaxed text-(--mute) sm:grid-cols-2">
               {more.map((p, i) => (
-                <Tagged tag={about.bodyTag} as="p" key={i} data-step="fade-up">
+                <Tagged tag={about.bodyTag} as="p" key={i} data-aos="fade-up">
                   {p}
                 </Tagged>
               ))}
@@ -75,10 +77,20 @@ export function About({ site }: { site: Site }) {
           </div>
           {/* two photos from on board, one lapping over the other; on phones they come first */}
           <div className="relative max-lg:order-first max-lg:pb-[18%] lg:col-span-5 lg:h-[min(72vh,42rem)]">
-            <div data-stage-pic className="relative ml-auto rounded-port aspect-[4/5] w-[84%] overflow-hidden lg:aspect-auto lg:h-full lg:w-[min(86%,56vh)]">
-              <Image src={about.portrait} alt={site.alts[about.portrait] ?? ""} fill sizes="(min-width: 1024px) 50vw, 84vw" className="object-cover" />
+            <div
+              data-aos="fade-up"
+              data-aos-img
+              className="relative ml-auto rounded-port aspect-[4/5] w-[84%] overflow-hidden lg:aspect-auto lg:h-full lg:w-[min(86%,56vh)]"
+            >
+              <Image
+                src={about.portrait}
+                alt={site.alts[about.portrait] ?? ""}
+                fill
+                sizes="(min-width: 1024px) 50vw, 84vw"
+                className="object-cover"
+              />
             </div>
-            <div data-step="zoom-in" className="absolute bottom-0 left-0 w-[58%] rounded-[calc(var(--radius-port)+0.5rem)] bg-(--bg) p-2 md:p-3">
+            <div data-aos="fade-up" className="absolute bottom-0 left-0 w-[58%] rounded-[calc(var(--radius-port)+0.5rem)] bg-(--bg) p-2 md:p-3">
               <div className="relative aspect-[3/2] overflow-hidden rounded-port">
                 <Image src={about.inset} alt={site.alts[about.inset] ?? ""} fill sizes="(min-width: 1024px) 24vw, 56vw" className="object-cover" />
               </div>
@@ -90,67 +102,13 @@ export function About({ site }: { site: Site }) {
   );
 }
 
-export function Services({ site }: { site: Site }) {
-  const services = site.content["home.services"];
-  return (
-    <section id="services" data-tone="foam" data-stage="rail" className="stage overflow-x-clip">
-      <div className="stage-view pb-[clamp(4rem,7.5vw,7.5rem)] pt-[clamp(4rem,6vw,6rem)]">
-        <Rail
-          label={services.title}
-          head={
-            <Title heading={services} as="h2" data-lines className="display max-w-[12em] t-section" />
-          }
-        >
-          {services.items.map((s, i) => (
-          <li key={i} className="rail-card w-[78vw] max-w-[25rem] shrink-0 snap-start sm:w-[46vw] lg:w-[29vw]">
-              <a href={book(site.content.business, s.title)} {...out} className="group card-focus block">
-                <Frame
-                  src={s.image}
-                alt={site.alts[s.image] || s.title}
-                  delay={Math.min(i, 3) * 120}
-                  sizes="(min-width: 1024px) 54vw, (min-width: 640px) 90vw, 150vw"
-                  opens="up"
-                  className="rail-pic aspect-[3/4] text-white"
-                >
-                  <span className="card-shade absolute inset-0" />
-                  <div className="absolute inset-x-6 bottom-6 flex items-end justify-between gap-4 md:inset-x-7 md:bottom-7">
-                    <Tagged tag={services.itemTag} as="h3" className="display t-title">
-                      {s.title}
-                    </Tagged>
-                    <CardArrow />
-                  </div>
-                </Frame>
-                <p data-aos="fade-up" data-aos-delay={Math.min(i, 3) * 120} className="mt-5 pr-4 leading-relaxed text-(--mute)">
-                  {s.body}
-                </p>
-              </a>
-            </li>
-          ))}
-        </Rail>
-      </div>
-    </section>
-  );
-}
-
-// The first tour fills the screen; the others hang on a wall below it (wide screens), five to a pattern
-const wall = [
-  "col-span-2 aspect-[4/3] lg:col-span-7 lg:row-span-2 lg:aspect-auto",
-  "aspect-[3/4] lg:col-span-5 lg:aspect-auto",
-  "aspect-[3/4] lg:col-span-5 lg:aspect-auto",
-  "aspect-[3/4] lg:col-span-5 lg:row-span-2 lg:aspect-auto",
-  "aspect-[3/4] lg:col-span-7 lg:row-span-2 lg:aspect-auto",
-];
-// …and the side it comes in from
-const wallAos = ["fade-right", "fade-left", "fade-left", "fade-right", "fade-left"] as const;
-// …and opens from
-const wallOpens = ["left", "right", "up", "up", "right"] as const;
-const wallSizes = ["58vw", "42vw", "42vw", "42vw", "58vw"];
-
+/** The tours: Dubai through its letters first, then the landmarks seen from the water, a card each (WhatsApp to book) */
 export function Tours({ site }: { site: Site }) {
   const tours = site.content["home.tours"];
-  const [opener, ...landmarks] = tours.items;
+  const [opener] = tours.items;
   return (
     <>
+      {/* the city seen through the letters of DUBAI, which open until it fills the screen (lib/stages: word) */}
       <section id="tours" data-tone="deep" data-stage="open" data-shape="word" data-word="DUBAI" className="stage">
         <div className="stage-view">
           <div className="stage-pic">
@@ -188,36 +146,38 @@ export function Tours({ site }: { site: Site }) {
           </div>
         </div>
       </section>
-      <section data-tone="deep" className="pb-[clamp(4rem,7.5vw,7.5rem)] pt-[clamp(3rem,5vw,5rem)]">
+      {/* the landmarks on the same dark ground, right after the letters: one section with them */}
+      <section aria-label={tours.title} data-tone="deep" className="-mt-px pb-[clamp(2.5rem,5vw,5rem)] pt-[clamp(1rem,2.5vw,2rem)]">
         <div className="container-x">
-          <ul className="grid grid-cols-2 gap-3 md:gap-5 lg:auto-rows-[clamp(13rem,20vw,19rem)] lg:grid-cols-12">
-            {landmarks.map((t, i) => (
-              <li key={i} className={wall[i % 5]}>
-                <a href={book(site.content.business, `${t.name} tour`)} {...out} className="group card-focus block h-full">
-                  <Frame
-                    src={t.image}
-                    alt={site.alts[t.image] || `${t.name}, Dubai`}
-                    focus={t.focus || undefined}
-                    aos={wallAos[i % 5]}
-                    opens={wallOpens[i % 5]}
-                    delay={i % 5 === 2 ? 140 : 0}
-                    sizes={`(min-width: 1024px) ${wallSizes[i % 5]}, 100vw`}
-                    className="h-full text-white"
-                  >
-                    <span className="card-shade absolute inset-0" />
-                    <div className="absolute inset-x-4 bottom-4 flex items-end justify-between gap-4 md:inset-x-8 md:bottom-7">
-                      <div>
-                        <Tagged tag={tours.itemTag} as="h3" className={`display ${i % 5 === 1 || i % 5 === 2 ? "t-card" : "t-title"}`}>
-                          {t.name}
-                        </Tagged>
-                        <p className="mt-1.5 text-[0.8125rem] text-white/85">Book this tour</p>
+          <ul className="grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-3">
+            {tours.items.map((t, i) => (
+              <li key={t.name}>
+                <Link href={`/tours/${tourSlug(t.name)}`} className="group card-focus block">
+                  <ViewTransition name={`tour-${tourSlug(t.name)}`} share="morph" default="none">
+                    <Frame
+                      src={t.image}
+                      alt={site.alts[t.image] || `${t.name}, Dubai`}
+                      focus={t.focus || undefined}
+                      aos="fade-up"
+                      delay={(i % 3) * 120}
+                      sizes="(min-width: 1024px) 33vw, 50vw"
+                      className="aspect-[4/5] text-white sm:aspect-[4/3]"
+                    >
+                      <span className="card-shade absolute inset-0" />
+                      <div className="absolute inset-x-4 bottom-4 flex items-end justify-between gap-3 md:inset-x-6 md:bottom-6">
+                        <div>
+                          <Tagged tag={tours.itemTag} as="h3" className="display t-card">
+                            {t.name}
+                          </Tagged>
+                          <p className="mt-1 text-[0.8125rem] text-white/85">View the tour</p>
+                        </div>
+                        <span className="max-sm:hidden">
+                          <CardArrow />
+                        </span>
                       </div>
-                      <span className="max-sm:hidden">
-                        <CardArrow />
-                      </span>
-                    </div>
-                  </Frame>
-                </a>
+                    </Frame>
+                  </ViewTransition>
+                </Link>
               </li>
             ))}
           </ul>

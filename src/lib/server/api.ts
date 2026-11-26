@@ -49,7 +49,7 @@ export function route<P = Record<string, never>>(
       const what = { userId: user.id, method: request.method, path: new URL(request.url).pathname };
       if (role && user.role !== role) {
         log.warn(what, "not allowed");
-        throw new ApiError(403, "Only an admin can do this");
+        throw new ApiError(403, role === "ADMIN" ? "Only an admin can do this" : "This is done in the SEO studio");
       }
       const answer = (await handler(request, { user, params: await ctx.params })) ?? { ok: true };
       if (changes && request.method !== "GET") {

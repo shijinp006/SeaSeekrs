@@ -7,7 +7,7 @@ export const instant = false;
 export const metadata: Metadata = { title: "Password" };
 
 export default async function Account() {
-  const user = await requireUser();
+  const user = await requireUser("SEO");
   return (
     <>
       <Heading title="Password" text={`Signed in as ${user.email}.`} />

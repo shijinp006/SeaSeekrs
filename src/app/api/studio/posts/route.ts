@@ -8,4 +8,4 @@ export const POST = route(async (request, { user }) => {
   await slugFree(draft.slug);
   const { id } = await db.post.create({ data: { slug: draft.slug, draft, updatedBy: user.email } });
   return { id };
-});
+}, { role: "SEO" });

@@ -81,13 +81,16 @@ export default function ScrollFilm({ frames, pace: givenPace, src, captions: giv
     const size = () => {
       // never more pixels than the film has: the browser scales the finished picture up for free
       const cw = canvas.clientWidth, ch = canvas.clientHeight;
-      const scale = Math.min(window.devicePixelRatio || 1, 1920 / cw, 1080 / ch);
+      const scale = upright() ? Math.min(window.devicePixelRatio || 1, 2, 1920 / cw) : Math.min(window.devicePixelRatio || 1, 1920 / cw, 1080 / ch);
       const w = Math.round(cw * scale), h = Math.round(ch * scale);
       if (w === canvas.width && h === canvas.height) return; // setting it clears the picture
       canvas.width = w;
       canvas.height = h;
       paint();
+      upgrade(); // a larger window may want the full film now
     };
+    const upright = () => portrait.matches;
+    /** The picture covers the screen, as object-fit: cover does */
     const put = (img: ImageBitmap, alpha: number) => {
       const cw = canvas.width, ch = canvas.height;
       const s = Math.max(cw / img.width, ch / img.height);
@@ -189,6 +192,10 @@ export default function ScrollFilm({ frames, pace: givenPace, src, captions: giv
       decoder.configure(config);
       return decoder;
     };
+    const fitted = (w: number, h: number): ImageBitmapOptions | undefined => {
+      const s = Math.max(canvas.width / w, canvas.height / h);
+      return s < 0.9 ? { resizeWidth: Math.round(w * s), resizeHeight: Math.round(h * s), resizeQuality: "medium" } : undefined;
+    };
     /**
      * Copies decoded frames for drawing, a few per screen refresh: a whole group at once makes the graphics chip miss
      * a refresh, which shows as a small hitch every few frames.
@@ -205,7 +212,7 @@ export default function ScrollFilm({ frames, pace: givenPace, src, captions: giv
         }
         most--;
         copying++;
-        createImageBitmap(frame)
+        createImageBitmap(frame, fitted(frame.displayWidth, frame.displayHeight))
           .then((img) => {
             if (id !== batch || has(i)) return img.close();
             bitmaps.get(i)?.close();
@@ -353,7 +360,7 @@ export default function ScrollFilm({ frames, pace: givenPace, src, captions: giv
       soft.clear();
       failures = 0;
       if (reduce || !("VideoDecoder" in window)) return loadStills();
-      const dir = portrait.matches ? src.sm : src.lg;
+      const dir = portrait.matches ? src.sm : src.lg; // phones held upright: the 3:4 centre crop, which covers them
       /** Reads one version of the film; `open` gets its pieces before they are there, `each` is told of every one */
       const read = async (name: string, priority: RequestPriority, open: (f: NonNullable<typeof full>) => void, each: (i: number) => void) => {
         const index: FilmIndex = await fetch(`${dir}/${name}.json`, { signal }).then((r) => r.json());
@@ -406,15 +413,23 @@ export default function ScrollFilm({ frames, pace: givenPace, src, captions: giv
         return;
       }
       if (id !== batch || !units || thrifty) return;
-      try {
-        const film = await read("film", "low", () => {}, () => {});
-        if (!film || id !== batch || !units) return;
-        full = film;
-        work();
-      } catch {
-        // the light version plays on
-      }
+      let asked = false;
+      upgrade = async () => {
+        // the light version is as sharp as a canvas of its own size can show: the full one only for a larger one
+        if (asked || id !== batch || canvas.width * canvas.height <= 1344 * 756) return;
+        asked = true;
+        try {
+          const film = await read("film", "low", () => {}, () => {});
+          if (!film || id !== batch || !units) return;
+          full = film;
+          work();
+        } catch {
+          // the light version plays on
+        }
+      };
+      upgrade();
     };
+    let upgrade: () => void = () => {};
 
     // ---- loading the stills: first frame (settles AVIF or WebP), then a coarse pass (every 8th), then fill in the gaps
     const order: number[] = [];
@@ -428,7 +443,7 @@ export default function ScrollFilm({ frames, pace: givenPace, src, captions: giv
       aborter.abort();
       aborter = new AbortController();
       const { signal } = aborter;
-      const dir = portrait.matches ? src.sm : src.lg;
+      const dir = portrait.matches ? src.sm : src.lg; // phones held upright: the 3:4 centre crop, which covers them
       const get = async (i: number) => {
         const r = await fetch(`${dir}/${pad(i + 1)}.${ext}`, { signal });
         if (!r.ok) throw new Error(String(r.status));

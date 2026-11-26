@@ -9,7 +9,7 @@ export const instant = false;
 export const metadata: Metadata = { title: "Images & Alt Text" };
 
 export default async function Images() {
-  await requireUser();
+  await requireUser("SEO");
   
   return (
     <>

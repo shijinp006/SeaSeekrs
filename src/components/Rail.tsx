@@ -26,23 +26,16 @@ export default function Rail({
   children: React.ReactNode;
 }) {
   const rail = useRef<HTMLUListElement>(null);
-  const thumb = useRef<HTMLSpanElement>(null);
   const aim = useRef<number | null>(null); // where a glide under way will come to rest
   const [edge, setEdge] = useState({ start: true, end: false });
 
-  // ---- progress line and arrows
+  // ---- the arrows: each is off at its end of the row
   useEffect(() => {
     const el = rail.current!;
     let raf = 0;
     const measure = () => {
       raf = 0;
       const max = el.scrollWidth - el.clientWidth;
-      const part = Math.min(1, el.clientWidth / el.scrollWidth);
-      const at = max > 0 ? el.scrollLeft / max : 0;
-      if (thumb.current) {
-        thumb.current.style.width = `${part * 100}%`;
-        thumb.current.style.transform = `translateX(${((1 - part) / part) * at * 100}%)`;
-      }
       const next = { start: el.scrollLeft < 4, end: el.scrollLeft > max - 4 };
       setEdge((old) => (old.start === next.start && old.end === next.end ? old : next));
     };
@@ -150,7 +143,7 @@ export default function Rail({
     glide(stops[Math.max(0, Math.min(stops.length - 1, i))]);
   };
   const button =
-    "grid size-11 place-items-center rounded-full border border-(--rule) transition-[background-color,border-color,color,opacity] duration-300 hover:border-gold hover:bg-gold hover:text-ink disabled:pointer-events-none disabled:opacity-35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--accent)";
+    "grid size-11 place-items-center rounded-xl border border-(--rule) transition-[background-color,border-color,color,opacity] duration-300 hover:border-gold hover:bg-gold hover:text-ink disabled:pointer-events-none disabled:opacity-35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--accent)";
 
   return (
     <div>
@@ -165,14 +158,9 @@ export default function Rail({
           </button>
         </div>
       </div>
-      <ul ref={rail} aria-label={label} tabIndex={0} className="rail mt-10 flex gap-4 md:mt-14 md:gap-6">
+      <ul ref={rail} aria-label={label} tabIndex={0} className="rail mt-7 flex gap-4 md:mt-9 md:gap-6">
         {children}
       </ul>
-      <div className="container-x mt-8" aria-hidden>
-        <span className="block h-px overflow-hidden bg-(--rule)">
-          <span ref={thumb} className="block h-full w-1/2 bg-(--fg)" />
-        </span>
-      </div>
     </div>
   );
 }

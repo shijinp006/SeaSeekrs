@@ -5,9 +5,9 @@ import SiteHeader from "@/components/SiteHeader";
 import { headingStyle, Tagged } from "@/components/Title";
 import ScrollFilm from "@/components/ScrollFilm";
 import MotionRoot from "@/components/MotionRoot";
-import { About, Services, Tours, Welcome } from "@/components/sections/Story";
+import { About, Tours, Welcome } from "@/components/sections/Story";
 import { OnBoard, Yachts } from "@/components/sections/Explore";
-import { Bow, Faq, Footer, Reviews } from "@/components/sections/Charter";
+import { Faq, Footer, Reviews } from "@/components/sections/Charter";
 import { heroFilm } from "@/lib/content";
 import { businessLd, faqLd, pageMetadata, websiteLd } from "@/lib/server/seo";
 import { getSite, type Site } from "@/lib/server/site";
@@ -62,17 +62,15 @@ export default async function Home() {
         {/* Slides up over the last 100vh of the hero while the film is still playing */}
         <div
           data-after-hero
-          className="relative z-10 -mt-[100svh] motion-reduce:mt-0 noscript:mt-0 before:pointer-events-none before:absolute before:inset-x-0 before:-top-24 before:h-24 before:bg-gradient-to-t before:from-black/30 before:to-transparent"
+          className="relative z-10 -mt-[100svh] bg-foam motion-reduce:mt-0 noscript:mt-0 before:pointer-events-none before:absolute before:inset-x-0 before:-top-24 before:h-24 before:bg-gradient-to-t before:from-black/30 before:to-transparent"
         >
           <Welcome site={site} />
           <About site={site} />
-          <Services site={site} />
-          <Tours site={site} />
           <Yachts site={site} />
+          <Tours site={site} />
           <OnBoard site={site} />
           <Reviews site={site} />
           <Faq site={site} />
-          <Bow site={site} />
         </div>
       </main>
 </PageTransition>

@@ -61,10 +61,13 @@ const readSession = cache(async () => {
 export const getUser = async (): Promise<SessionUser | null> => (await readSession())?.user ?? null;
 export const getSessionId = async () => (await readSession())?.id ?? null;
 
-/** For pages: both roles may work in the studio; some pages are for the admin only */
-export async function requireUser(role?: Role): Promise<SessionUser> {
+/** Where each role works: the admin in /admin, the SEO specialist in /studio */
+export const homeOf = (role: Role) => (role === "ADMIN" ? "/admin" : "/studio");
+
+/** For pages: each area is for one role only; anyone else is sent to their own area */
+export async function requireUser(role: Role): Promise<SessionUser> {
   const user = await getUser();
-  if (!user) redirect("/studio/login");
-  if (role && user.role !== role) redirect("/studio");
+  if (!user) redirect(`${homeOf(role)}/login`);
+  if (user.role !== role) redirect(homeOf(user.role));
   return user;
 }

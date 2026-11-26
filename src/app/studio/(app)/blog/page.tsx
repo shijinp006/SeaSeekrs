@@ -13,7 +13,7 @@ export const instant = false;
 export const metadata: Metadata = { title: "Blog posts" };
 
 export default async function Posts() {
-  await requireUser();
+  await requireUser("SEO");
   const posts = await getStudioPosts();
   return (
     <>

@@ -12,7 +12,7 @@ export const instant = false;
 export const metadata: Metadata = { title: "Edit post" };
 
 export default async function EditPost({ params }: { params: Promise<{ id: string }> }) {
-  await requireUser();
+  await requireUser("SEO");
   const { id } = await params;
   const post = uuidSchema.safeParse(id).success ? await db.post.findUnique({ where: { id } }) : null;
   if (!post) notFound();

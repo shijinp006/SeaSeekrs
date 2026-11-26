@@ -8,7 +8,7 @@ export const instant = false;
 export const metadata: Metadata = { title: "New post" };
 
 export default async function NewPost() {
-  await requireUser();
+  await requireUser("SEO");
   return (
     <>
       <Heading title="New post" back={{ href: "/studio/blog", label: "Blog posts" }} />

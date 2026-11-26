@@ -100,6 +100,20 @@ export async function discardPost(post: Post) {
   await db.post.update({ where: { id: post.id }, data: { draft: published, slug: published.slug, dirty: false } });
 }
 
+/** Puts one section on the website at once, without a draft (the admin's services). A draft of it is replaced. */
+export async function publishSection(key: SectionKey, value: Sections[SectionKey], by: string) {
+  const now = new Date();
+  const published = value as Prisma.InputJsonValue;
+  await db.$transaction([
+    db.entry.upsert({
+      where: { key },
+      create: { key, published, draft: Prisma.DbNull, updatedBy: by, publishedAt: now },
+      update: { published, draft: Prisma.DbNull, updatedBy: by, publishedAt: now },
+    }),
+    db.publish.create({ data: { by, changes: 1, at: now } }),
+  ]);
+}
+
 /** Puts every draft on the website, all or nothing */
 export async function publishAll(by: string) {
   const now = new Date();

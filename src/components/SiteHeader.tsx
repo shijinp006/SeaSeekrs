@@ -1,3 +1,4 @@
+import FloatingSocial from "@/components/FloatingSocial";
 import Header from "@/components/Header";
 import PreviewBar from "@/components/PreviewBar";
 import { company } from "@/lib/content";
@@ -10,7 +11,7 @@ export default function SiteHeader({ site, home }: { site: Site; home?: boolean 
       {site.preview && <PreviewBar />}
       <a
         href="#top"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-full focus:bg-gold focus:px-6 focus:py-3 focus:text-ink"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-xl focus:bg-gold focus:px-6 focus:py-3 focus:text-ink"
       >
         Skip to the content
       </a>
@@ -22,6 +23,8 @@ export default function SiteHeader({ site, home }: { site: Site; home?: boolean 
         logoAlt={site.alts[company.logo.src] || business.name}
         home={home}
       />
+      {/* WhatsApp, Instagram and Facebook at the right edge, on every page */}
+      <FloatingSocial site={site} />
     </>
   );
 }

@@ -40,12 +40,15 @@ export default function SectionForm({
   number,
   url,
   onSaved,
+  live = false,
 }: {
   section: Section;
   state: SectionState;
   number?: number;
   url: string;
   onSaved?: () => void;
+  /** the admin's editor: saving puts it on the website at once, with no draft */
+  live?: boolean;
 }) {
   const router = useRouter();
   const media = useMedia();
@@ -83,7 +86,10 @@ export default function SectionForm({
     }
     setBusy(false);
     setErrors({});
-    setNote({ text: "Saved as a draft. See it in the preview; Confirm & Publish puts it on the website.", bad: false });
+    setNote({
+      text: live ? "Saved. It is on the website now." : "Saved as a draft. See it in the preview; Confirm & Publish puts it on the website.",
+      bad: false,
+    });
     router.refresh();
     onSaved?.();
   };
@@ -114,14 +120,14 @@ export default function SectionForm({
         )}
         <h2 className="font-serif text-[1.4rem] leading-tight">{section.label}</h2>
         {state.edited && <Badge tone="good">Edited</Badge>}
-        {state.draft && <Badge tone="calm">Draft</Badge>}
+        {state.draft && <Badge tone="calm">{live ? "SEO draft" : "Draft"}</Badge>}
       </div>
       <div className={section.seo ? "grid gap-x-10 gap-y-8 p-5 sm:p-7 @2xl:grid-cols-2" : "p-5 sm:p-7"}>
         <div className="grid content-start gap-x-5 gap-y-6 @lg:grid-cols-2">{rows}</div>
         {section.seo && <SeoPreview title={String(value.title)} description={String(value.description)} image={String(value.image)} url={url} />}
       </div>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-(--rule) px-5 py-4 sm:px-7">
-        <button
+        {!live && <button
           type="button"
           className={PLAIN}
           disabled={busy || JSON.stringify(value) === JSON.stringify(state.original)}
@@ -132,10 +138,10 @@ export default function SectionForm({
           }}
         >
           <Icon name="undo" className="size-4" /> Reset to original
-        </button>
+        </button>}
         <Note text={dirty && !note.bad ? "Not saved yet" : note.text} bad={note.bad} />
         <button type="submit" className={`${NAVY} ml-auto`} disabled={busy || !dirty}>
-          {busy ? "Saving…" : section.seo ? "Save" : "Save section"}
+          {busy ? "Saving…" : live ? "Save & publish" : section.seo ? "Save" : "Save section"}
         </button>
       </div>
     </form>

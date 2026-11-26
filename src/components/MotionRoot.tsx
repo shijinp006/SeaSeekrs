@@ -6,7 +6,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import type { Aos } from "@/lib/motion";
-import { heldIn, openings, stagePoint, stages } from "@/lib/stages";
+import { heldIn, stagePoint, stages } from "@/lib/stages";
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 // Mobile browsers resize the viewport as the address bar hides/shows; don't re-measure pins for that.
@@ -19,7 +19,6 @@ ScrollTrigger.config({ ignoreMobileResize: true });
  *  data-aos        fade-up, fade-down, fade-left, fade-right or zoom-in (data-aos-delay="120": milliseconds)
  *  data-aos-img    on a picture frame: the picture inside also settles from a slight zoom
  *  data-lines      heading whose lines rise one after another
- *  data-drift      inside a frame: gentle parallax
  * Tied to the scroll (lib/stages): data-stage sections, and data-opens picture frames.
  */
 export default function MotionRoot() {
@@ -123,7 +122,14 @@ export default function MotionRoot() {
           onEnter: () => enter(1),
           onEnterBack: () => enter(-1),
         });
-        ScrollTrigger.create({ trigger, endTrigger, start: "top bottom", end: "bottom top", onLeave: leave, onLeaveBack: leave });
+        ScrollTrigger.create({
+          trigger,
+          endTrigger,
+          start: "top bottom",
+          end: "bottom top",
+          onLeave: leave,
+          onLeaveBack: leave,
+        });
       };
 
       const narrow = window.innerWidth < 768; // sideways moves become up and down ones: there is no room beside the text
@@ -143,13 +149,46 @@ export default function MotionRoot() {
           (dir) => {
             gsap.fromTo(
               el,
-              { opacity: 0, x: 0, y: 0, scale: 1, ...FROM[el.dataset.aos as Aos](dir) },
-              { opacity: 1, x: 0, y: 0, scale: 1, duration: 1.5, delay, ease: "power2.out", overwrite: true },
+              {
+                opacity: 0,
+                x: 0,
+                y: 0,
+                scale: 1,
+                ...FROM[el.dataset.aos as Aos](dir),
+              },
+              {
+                opacity: 1,
+                x: 0,
+                y: 0,
+                scale: 1,
+                duration: 1.5,
+                delay,
+                ease: "power2.out",
+                overwrite: true,
+              },
             );
-            if (imgs.length) gsap.fromTo(imgs, { scale: 1.2 }, { scale: 1, duration: 2.4, delay, ease: "power2.out", overwrite: true });
+            if (imgs.length)
+              gsap.fromTo(
+                imgs,
+                { scale: 1.2 },
+                {
+                  scale: 1,
+                  duration: 2.4,
+                  delay,
+                  ease: "power2.out",
+                  overwrite: true,
+                },
+              );
           },
           // hidden without any offset, so that its place on the page is always measured right
-          () => gsap.set(el, { opacity: 0, x: 0, y: 0, scale: 1, overwrite: true }),
+          () =>
+            gsap.set(el, {
+              opacity: 0,
+              x: 0,
+              y: 0,
+              scale: 1,
+              overwrite: true,
+            }),
         );
       });
 
@@ -175,7 +214,13 @@ export default function MotionRoot() {
             gsap.fromTo(
               lines,
               { yPercent: 115 * dir },
-              { yPercent: 0, duration: 1.5, ease: "power4.out", stagger: { each: 0.15, from: dir > 0 ? "start" : "end" }, overwrite: true },
+              {
+                yPercent: 0,
+                duration: 1.5,
+                ease: "power4.out",
+                stagger: { each: 0.15, from: dir > 0 ? "start" : "end" },
+                overwrite: true,
+              },
             );
           },
           () => {
@@ -187,18 +232,6 @@ export default function MotionRoot() {
 
       // ---- tied to the scroll
       stages();
-      openings();
-      all("[data-drift]").forEach((el) =>
-        gsap.fromTo(
-          el,
-          { yPercent: -5 },
-          {
-            yPercent: 5,
-            ease: "none",
-            scrollTrigger: { trigger: el.parentElement!, start: "top bottom", end: "bottom top", scrub: 0.6 },
-          },
-        ),
-      );
     });
 
     // Pins change the page height; without this Lenis can cap the first anchor jump short of its target
@@ -212,7 +245,11 @@ export default function MotionRoot() {
     // The hero's pin has just been added above every section: go where the address asked for
     const asked = location.hash.length > 1 && document.getElementById(location.hash.slice(1));
     if (asked) {
-      if (lenis) lenis.scrollTo(top(asked) + stagePoint(asked), { immediate: true, force: true });
+      if (lenis)
+        lenis.scrollTo(top(asked) + stagePoint(asked), {
+          immediate: true,
+          force: true,
+        });
       else window.scrollTo(0, top(asked));
     }
 

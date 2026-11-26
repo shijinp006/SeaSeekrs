@@ -13,7 +13,7 @@ const FROM: Record<Aos, gsap.TweenVars> = {
   "zoom-in": { scale: 0.86 },
 };
 /** Seconds the picture takes to catch up with the scroll: one turn of the wheel becomes one even movement */
-const SOFT = 0.7;
+const SOFT = 0.4;
 
 /** How words come in: headings rise out of a line, as if from behind an edge; the rest floats up */
 const words = (el: HTMLElement, from: gsap.TweenVars): gsap.TweenVars =>
@@ -325,7 +325,7 @@ function opening(el: HTMLElement, how: Opens) {
       trigger: el,
       start: "clamp(top 100%)",
       end: () => (el.offsetHeight > window.innerHeight * 0.75 ? "top 18%" : "center 48%"),
-      scrub: 0.9,
+      scrub: 0.5,
     },
   });
   gsap.context(() => () => {

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Sidebar from "@/components/studio/Sidebar";
 import TopBar from "@/components/studio/TopBar";
-import { countNewBookings } from "@/lib/server/bookings";
 import { requireUser } from "@/lib/server/session";
 import { getPending, lastPublished } from "@/lib/server/studio";
 
@@ -11,12 +10,13 @@ export const metadata: Metadata = { title: { default: "SEO Studio", template: "%
 
 const when = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Dubai" });
 
+/** The SEO studio: for SEO specialists only. The admin works in /admin. */
 export default async function StudioLayout({ children }: { children: React.ReactNode }) {
-  const user = await requireUser();
-  const [pending, last, newBookings] = await Promise.all([getPending(), lastPublished(), user.role === "ADMIN" ? countNewBookings() : 0]);
+  const user = await requireUser("SEO");
+  const [pending, last] = await Promise.all([getPending(), lastPublished()]);
   return (
     <div data-tone="foam" data-studio className="min-h-svh bg-foam text-ink">
-      <Sidebar user={user} newBookings={newBookings} />
+      <Sidebar user={user} />
       <div className="lg:pl-64">
         <TopBar pending={pending} last={last && when.format(last.at)} />
         <main className="mx-auto max-w-[110rem] px-4 pb-20 pt-8 sm:px-6 lg:px-8 xl:px-10">{children}</main>

@@ -13,7 +13,7 @@ const PER_EMAIL_AND_IP = 10;
 const PER_EMAIL = 100;
 
 export const POST = openRoute(async (request) => {
-  const { email, password } = await body(request, loginSchema);
+  const { email, password, area } = await body(request, loginSchema);
   const ip = clientIp(request);
   const failed = { success: false, createdAt: { gt: new Date(Date.now() - WINDOW) } };
 
@@ -35,6 +35,10 @@ export const POST = openRoute(async (request) => {
     log.warn({ ip, userId: user?.id }, "sign-in failed");
     throw new ApiError(401, "Wrong email or password");
   }
+
+  // the right password on the other area's sign-in page: say where to go, without signing in
+  if (area && user.role !== area)
+    throw new ApiError(403, user.role === "ADMIN" ? "Admins sign in at /admin/login" : "SEO specialists sign in at /studio/login");
 
   await db.loginAttempt.update({ where: { id: attempt.id }, data: { success: true } });
   await db.loginAttempt.deleteMany({ where: { createdAt: { lt: new Date(Date.now() - KEEP) } } });

@@ -11,12 +11,28 @@ import { Icon, type IconName } from "./ui";
 
 type Item = { href: string; label: string; icon: IconName; exact?: boolean; count?: number };
 
-const groups = (admin: boolean, newBookings: number): { title?: string; items: Item[] }[] => [
+/** The admin panel: bookings, services and accounts */
+const adminGroups = (newBookings: number): { title?: string; items: Item[] }[] => [
   {
     items: [
-      { href: "/studio", label: "Overview", icon: "gauge", exact: true },
-      ...(admin ? [{ href: "/studio/bookings", label: "Bookings", icon: "calendar" as const, count: newBookings }] : []),
+      { href: "/admin", label: "Overview", icon: "gauge", exact: true },
+      { href: "/admin/bookings", label: "Bookings", icon: "calendar", count: newBookings },
+      { href: "/admin/services", label: "Services", icon: "wave" },
     ],
+  },
+  {
+    title: "Account",
+    items: [
+      { href: "/admin/users", label: "Users", icon: "users" },
+      { href: "/admin/account", label: "Password", icon: "key" },
+    ],
+  },
+];
+
+/** The SEO studio: text, Google results, images and blog */
+const studioGroups = (): { title?: string; items: Item[] }[] => [
+  {
+    items: [{ href: "/studio", label: "Overview", icon: "gauge", exact: true }],
   },
   {
     title: "Pages",
@@ -33,22 +49,21 @@ const groups = (admin: boolean, newBookings: number): { title?: string; items: I
   },
   {
     title: "Account",
-    items: [
-      ...(admin ? [{ href: "/studio/users", label: "Users", icon: "users" as const }] : []),
-      { href: "/studio/account", label: "Password", icon: "key" },
-    ],
+    items: [{ href: "/studio/account", label: "Password", icon: "key" }],
   },
 ];
 
-export default function Sidebar({ user, newBookings }: { user: { name: string; role: "ADMIN" | "SEO" }; newBookings: number }) {
+export default function Sidebar({ user, newBookings = 0 }: { user: { name: string; role: "ADMIN" | "SEO" }; newBookings?: number }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
+  const admin = user.role === "ADMIN";
+  const home = admin ? "/admin" : "/studio";
 
   const signOut = async () => {
     await send("POST", "/api/studio/auth/logout");
     // a full load, so nothing of the studio stays in memory
     // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-    window.location.assign("/studio/login");
+    window.location.assign(`${home}/login`);
   };
 
   return (
@@ -72,13 +87,21 @@ export default function Sidebar({ user, newBookings }: { user: { name: string; r
           <Image src={company.logo.src} alt="" width={52} height={46} className="h-10 w-auto brightness-150" />
           <div>
             <p className="font-serif text-[1.25rem] leading-none">
-              SEO <em>Studio</em>
+              {admin ? (
+                <>
+                  Admin <em>Panel</em>
+                </>
+              ) : (
+                <>
+                  SEO <em>Studio</em>
+                </>
+              )}
             </p>
             <p className="mt-1.5 text-[0.75rem] text-white/60">Sea Seakers</p>
           </div>
         </div>
-        <nav aria-label="Studio" className="flex-1 overflow-y-auto px-3 py-4 [scrollbar-color:#ffffff33_transparent] [scrollbar-width:thin]">
-          {groups(user.role === "ADMIN", newBookings).map((g, i) => (
+        <nav aria-label={admin ? "Admin" : "Studio"} className="flex-1 overflow-y-auto px-3 py-4 [scrollbar-color:#ffffff33_transparent] [scrollbar-width:thin]">
+          {(admin ? adminGroups(newBookings) : studioGroups()).map((g, i) => (
             <div key={i} className={i ? "mt-5" : ""}>
               {g.title && <p className="px-3 pb-1.5 text-[0.75rem] text-aqua/90">{g.title}</p>}
               <ul>

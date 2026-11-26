@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { siteUrl } from "@/lib/server/site";
-import { Bodoni_Moda, Cormorant_Garamond, Inter, Jost } from "next/font/google";
+import { Bodoni_Moda, Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 
 
@@ -10,15 +10,8 @@ const bodoni = Bodoni_Moda({
   variable: "--font-bodoni",
   display: "swap",
 });
-// below the hero, and on the other pages
-const cormorant = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["500", "600"],
-  style: ["normal", "italic"],
-  variable: "--font-cormorant",
-  display: "swap",
-});
-const jost = Jost({ subsets: ["latin"], variable: "--font-jost", display: "swap" });
+// the headings below the hero, and on the other pages
+const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"], variable: "--font-playfair", display: "swap" });
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
 export const metadata: Metadata = {
@@ -32,7 +25,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${bodoni.variable} ${inter.variable} ${cormorant.variable} ${jost.variable}`}>
+    <html lang="en" className={`${bodoni.variable} ${inter.variable} ${playfair.variable}`}>
       <head>
         {/* On the home page: runs before the browser restores the old scroll position, so reloads open at the hero */}
         <script dangerouslySetInnerHTML={{ __html: "if(location.pathname==='/')history.scrollRestoration='manual'" }} />

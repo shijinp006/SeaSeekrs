@@ -109,7 +109,8 @@ const email = z.string().trim().toLowerCase().max(160).pipe(z.email("Not a valid
 const password = z.string().min(12, "Use 12 characters or more").max(200, "Keep it under 200 characters");
 const role = z.enum(["ADMIN", "SEO"]);
 
-export const loginSchema = z.strictObject({ email, password: z.string().min(1, "This is required").max(200) });
+/** `area`: the sign-in page it was sent from, which lets in that role only */
+export const loginSchema = z.strictObject({ email, password: z.string().min(1, "This is required").max(200), area: role.optional() });
 export const passwordSchema = z.strictObject({ current: z.string().min(1, "This is required").max(200), password });
 export const newUserSchema = z.strictObject({ name: oneLine(80), email, role, password });
 export const userPatchSchema = z

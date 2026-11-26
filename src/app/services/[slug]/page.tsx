@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import BookNow from "@/components/BookNow";
-import Breadcrumb from "@/components/Breadcrumb";
 import Gallery from "@/components/Gallery";
+import { fleetPhotos } from "@/lib/fleet";
 import { Check } from "@/components/Icons";
 import JsonLd from "@/components/JsonLd";
-import ServiceCard from "@/components/ServiceCard";
 import PageTransition from "@/components/PageTransition";
 import SiteHeader from "@/components/SiteHeader";
 import SmoothScroll from "@/components/SmoothScroll";
@@ -14,7 +13,7 @@ import { book, whatsapp } from "@/lib/links";
 import { LINK } from "@/lib/motion";
 import { breadcrumbLd, pageMetadata, serviceLd } from "@/lib/server/seo";
 import { getSite, publishedSite } from "@/lib/server/site";
-import { getService, moreServices, pageOf, servicesHref, servicesOf, yachtsFor } from "@/lib/services";
+import { getService, servicesOf, yachtsFor } from "@/lib/services";
 
 // Waits for the service instead of streaming it in, so an unknown address answers with a real 404
 export const instant = false;
@@ -57,7 +56,9 @@ export default async function ServicePage({ params }: Props) {
   const service = getService(site, (await params).slug);
   if (!service) notFound();
   const { business } = site.content;
-  const alts = Object.fromEntries(service.photos.map((p) => [p, site.alts[p] ?? ""]));
+  // the yachts and the trips on board them open on the picture they had on the home page, and show only that boat
+  const photos = fleetPhotos(service.slug, service.photos);
+  const alts = Object.fromEntries(photos.map((p) => [p, site.alts[p] ?? ""]));
   return (
     <>
       <JsonLd
@@ -72,27 +73,17 @@ export default async function ServicePage({ params }: Props) {
       <SiteHeader site={site} home={false} />
       <PageTransition>
 <main id="top" tabIndex={-1} className="outline-none">
-        <section data-tone="deep" className="pb-14 pt-36 md:pb-20 md:pt-48">
-          <div className="container-x">
-            <div className="text-(--mute)">
-              <Breadcrumb
-                steps={[{ name: "Home", href: "/" }, { name: "Services", href: servicesHref(pageOf(site, service)) }, { name: service.title }]}
-              />
-            </div>
-            <h1 className="display t-hero mt-6">{service.title}</h1>
-            <p className="mt-5 max-w-xl t-lead text-(--mute)">{service.summary}</p>
-          </div>
-        </section>
-
         <div data-after-hero>
-          <section data-tone="foam" className="py-14 md:py-20">
+          {/* the page opens on the service itself: room for the menu above */}
+          <section data-tone="foam" className="pb-14 pt-28 md:pb-20 md:pt-36">
             <div className="container-x grid gap-x-12 gap-y-10 lg:grid-cols-12">
               <div className="lg:col-span-7">
-                <Gallery aos="fade-up" morph={`service-${service.slug}`} first name={service.title} photos={service.photos} alts={alts} />
+                <Gallery aos="fade-up" morph={`service-${service.slug}`} first name={service.title} photos={photos} alts={alts} />
               </div>
               <div className="lg:col-span-5">
-                <h2 data-aos="fade-up" className="display t-title">About this service</h2>
-                <div data-aos="fade-up" className="mt-5 space-y-4 t-lead text-(--mute)">
+                <h1 className="display t-section">{service.title}</h1>
+                <h2 data-aos="fade-up" className="mt-6 font-serif text-[1.35rem]">About this service</h2>
+                <div data-aos="fade-up" className="mt-3 space-y-4 t-lead text-(--mute)">
                   {service.body.map((p, i) => (
                     <p key={i}>{p}</p>
                   ))}
@@ -112,59 +103,6 @@ export default async function ServicePage({ params }: Props) {
             </div>
           </section>
 
-          <section data-tone="shallow" className="py-14 md:py-20">
-            <div className="container-x">
-              <h2 data-aos="fade-up" className="display t-section">{service.yacht ? "On board" : "Our fleet"}</h2>
-              {yachtsFor(service, site).map((y) => (
-                <article key={y.title} data-aos="fade-up" className="mt-10 grid gap-x-12 gap-y-8 border-t border-(--rule) pt-8 lg:grid-cols-12">
-                  <div className="lg:col-span-5">
-                    <h3 className="display t-card">{y.title}</h3>
-                    <p className="mt-4">
-                      <span className="display block text-[1.9rem]">{y.daily}</span>
-                      <span className="text-(--mute)">a day, or {y.hourly}</span>
-                    </p>
-                    <dl className="mt-6 grid grid-cols-2 gap-x-6 border-t border-(--rule)">
-                      {y.specs.map(({ label, value }) => (
-                        <div key={label} className="border-b border-(--rule) py-3">
-                          <dt className="text-[0.8125rem] text-(--mute)">{label}</dt>
-                          <dd className="mt-0.5">{value}</dd>
-                        </div>
-                      ))}
-                    </dl>
-                  </div>
-                  <div className="lg:col-span-7">
-                    <h4 className="font-serif text-xl">Features</h4>
-                    <Checks items={y.features} className="mt-5 grid gap-x-8 gap-y-3 sm:grid-cols-2" />
-                    {y.addons.length > 0 && (
-                      <>
-                        <h4 className="mt-8 font-serif text-xl">Addons</h4>
-                        <ul className="mt-5 flex flex-wrap gap-2">
-                          {y.addons.map((a) => (
-                            <li key={a} className="rounded-full border border-(--rule) px-3.5 py-1.5 text-[0.85rem]">
-                              {a}
-                            </li>
-                          ))}
-                        </ul>
-                      </>
-                    )}
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
-
-          <section data-tone="foam" className="py-14 md:py-20">
-            <div className="container-x">
-              <h2 data-aos="fade-up" className="display t-section">More services</h2>
-              <ul className="mt-10 grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
-                {moreServices(site, service, 3).map((s, i) => (
-                  <li key={s.slug} data-aos="fade-up" data-aos-delay={i * 130}>
-                    <ServiceCard service={s} site={site} heading="h3" />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </section>
         </div>
       </main>
 </PageTransition>

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { MenuIcon } from "@/components/Icons";
 import { company } from "@/lib/content";
 import { BTN } from "@/lib/motion";
 
@@ -32,14 +33,9 @@ export default function Header({
   const [open, setOpen] = useState(false);
   // Clear over the hero and the full-screen pictures; frosted glass in the page's own tone elsewhere
   const [glass, setGlass] = useState(false);
-  // Steps aside while reading on, comes back at the first scroll up
-  const [away, setAway] = useState(false);
 
   useEffect(() => {
     let raf = 0;
-    let turn = window.scrollY; // where the scroll last changed direction
-    let last = turn;
-    let down = false;
     const check = () => {
       raf = 0;
       const after = document.querySelector("[data-after-hero]");
@@ -49,15 +45,6 @@ export default function Header({
         return r.top <= 40 && r.bottom > 40;
       });
       setGlass(past && !over);
-
-      const y = window.scrollY;
-      if (y !== last && y > last !== down) {
-        down = y > last;
-        turn = last;
-      }
-      last = y;
-      if (!past) setAway(false);
-      else if (Math.abs(y - turn) > 60) setAway(down);
     };
     const onScroll = () => {
       if (!raf) raf = requestAnimationFrame(check);
@@ -117,12 +104,12 @@ export default function Header({
                     href={l.href}
                     onClick={close}
                     style={{ transitionDelay: open ? `${300 + i * 80}ms` : "0ms" }}
-                    className={`group flex items-baseline gap-5 py-1 transition-[transform,opacity] duration-700 ease-[cubic-bezier(0.19,1,0.22,1)] ${
+                    className={`group flex items-center gap-4 py-1 transition-[transform,opacity] duration-700 ease-[cubic-bezier(0.19,1,0.22,1)] ${
                       open ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
                     }`}
                   >
-                    <span className="kicker text-white/40">0{i + 1}</span>
-                    <span className="serif text-[clamp(2rem,min(10vw,7svh),4.5rem)] leading-[1.05] transition-colors group-hover:text-gold">
+                    <MenuIcon link={l} className="size-5 shrink-0 text-gold sm:size-6" />
+                    <span className="serif text-[clamp(1.5rem,min(7vw,5svh),2.75rem)] leading-[1.15] transition-colors group-hover:text-gold">
                       {l.label}
                     </span>
                   </a>
@@ -133,7 +120,7 @@ export default function Header({
 
           <div
             style={{ transitionDelay: open ? "650ms" : "0ms" }}
-            className={`flex flex-col gap-6 border-t border-white/15 pt-8 transition-opacity duration-700 sm:flex-row sm:items-end sm:justify-between ${
+            className={`flex flex-col items-start gap-6 border-t border-white/15 pt-8 transition-opacity duration-700 ${
               open ? "opacity-100" : "opacity-0"
             }`}
           >
@@ -144,7 +131,7 @@ export default function Header({
             <a
               href={at("#contact")}
               onClick={close}
-              className={`self-start bg-gold px-10 py-4 font-medium text-navy-deep hover:bg-gold-light sm:self-auto ${BTN}`}
+              className={`bg-gold px-10 py-4 font-medium text-navy-deep hover:bg-gold-light ${BTN}`}
             >
               {cta}
             </a>
@@ -157,9 +144,9 @@ export default function Header({
         style={{ viewTransitionName: "site-header" }}
         className={`relative border-b transition-[translate,border-color,background-color] duration-500 ease-out ${
           solid
-            ? "border-(--rule) bg-[color-mix(in_srgb,var(--bg)_95%,transparent)] text-(--fg)"
+            ? "border-transparent bg-[#14222b] text-white"
             : "border-transparent text-white"
-        } ${away && !open ? "-translate-y-full focus-within:translate-y-0" : ""}`}
+        }`}
       >
         <div
           className={`container-x flex items-center justify-between transition-[padding] duration-500 ${

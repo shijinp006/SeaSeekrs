@@ -29,4 +29,4 @@ export const DELETE = route<{ id: string }>(async (request, { params }) => {
   if (uses.length) throw new ApiError(409, `Still used in ${uses.join(", ")}`);
   await db.media.delete({ where: { id: media.id } });
   await removeImage(media.path);
-});
+}, { role: "SEO" });

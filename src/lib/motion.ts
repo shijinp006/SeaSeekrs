@@ -1,6 +1,6 @@
 /** Pill buttons: lift and a soft shadow on hover, settle when pressed */
 export const BTN =
-  "inline-block cursor-pointer rounded-full text-[0.9rem] font-medium transition-[translate,background-color,box-shadow,filter] duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_28px_-14px_rgba(4,22,30,0.6)] active:translate-y-0 active:shadow-none";
+  "inline-block cursor-pointer rounded-xl text-[0.9rem] font-medium transition-[translate,background-color,box-shadow,filter] duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_28px_-14px_rgba(4,22,30,0.6)] active:translate-y-0 active:shadow-none";
 
 /** The main action, in champagne */
 export const BTN_GOLD = `${BTN} bg-linear-to-br from-gold-light to-gold px-8 py-4 text-[0.8rem]! tracking-[0.12em] uppercase text-ink hover:brightness-105`;

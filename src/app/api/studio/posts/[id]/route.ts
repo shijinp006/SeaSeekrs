@@ -14,7 +14,7 @@ async function find(id: string) {
 export const PUT = route<{ id: string }>(async (request, { user, params }) => {
   const post = await find(params.id);
   await savePost(post, await body(request, postSchema), user.email);
-});
+}, { role: "SEO" });
 
 /** ?draft=1 goes back to the published version; otherwise the post is deleted, on the website too */
 export const DELETE = route<{ id: string }>(async (request, { params }) => {
@@ -25,4 +25,4 @@ export const DELETE = route<{ id: string }>(async (request, { params }) => {
   }
   await db.post.delete({ where: { id: post.id } });
   if (post.published) refreshSite();
-});
+}, { role: "SEO" });

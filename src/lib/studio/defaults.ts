@@ -148,6 +148,7 @@ export const defaults = {
     phone: c.company.phone.label,
     whatsapp: c.company.mobile.href.replace(/\D/g, ""),
     instagram: c.company.instagram,
+    facebook: "",
     youtube: c.company.youtube,
     trustpilot: c.company.trustpilot,
     google: c.company.google,

@@ -17,7 +17,8 @@ const SAMPLES = 64;
 
 if (!isMainThread) {
   parentPort.on("message", async ({ kind, a, b, out }) => {
-    const image = kind === "clean" ? await withoutMark(a) : await between(a, b);
+    // HERO_NO_MARK=1: a source without the star in its corner (or with it cropped away) is taken as it is
+    const image = kind === "clean" ? (process.env.HERO_NO_MARK ? sharp(a) : await withoutMark(a)) : await between(a, b);
     await image.png({ compressionLevel: 2 }).toFile(out);
     parentPort.postMessage(out);
   });
@@ -76,7 +77,7 @@ const median = (list) => [...list].sort((a, b) => a - b)[list.length >> 1];
 /** Video → { files, pace }: the frames in order, and the frame to show at SAMPLES + 1 even steps of the scroll */
 export async function heroFrames(input) {
   const dir = join("source-media", ".frames");
-  const key = `${basename(input)} ${statSync(input).size} ${JUMP} ${FAST} ${EVEN}`;
+  const key = `${basename(input)} ${statSync(input).size} ${JUMP} ${FAST} ${EVEN} ${process.env.HERO_NO_MARK ? "nomark" : "mark"}`;
   const info = join(dir, "done.json");
   if (existsSync(info)) {
     const saved = JSON.parse(readFileSync(info, "utf8"));

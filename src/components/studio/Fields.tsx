@@ -4,6 +4,7 @@ import { useId, useState } from "react";
 import type { Field } from "@/lib/studio/fields";
 import { descriptionIssue, titleIssue } from "@/lib/studio/seo";
 import { ImageField } from "./ImagePicker";
+import Pager from "./Pager";
 import { Icon, ICON_BTN, INPUT, LABEL, LINE } from "./ui";
 
 export type Value = Record<string, unknown>;
@@ -11,7 +12,7 @@ export type Errors = Record<string, string>;
 
 const blank = (f: Field): unknown =>
   f.type === "list" || f.type === "strings" || f.type === "images" ? [] : f.type === "check" ? false : "";
-const blankItem = (f: Field): Value => Object.fromEntries(f.of!.map((x) => [x.key, blank(x)]));
+export const blankItem = (f: Field): Value => Object.fromEntries(f.of!.map((x) => [x.key, blank(x)]));
 const under = (errors: Errors, path: string) => Object.keys(errors).some((k) => k === path || k.startsWith(`${path}.`));
 const move = <T,>(list: T[], from: number, to: number) => {
   const next = [...list];
@@ -214,6 +215,20 @@ function List({ field: f, value, onChange, errors, path }: Many<Value>) {
   const row = of.length === 2 && of.every((x) => x.type === "text" || x.type === "url");
   const fixed = f.minItems === f.maxItems;
   const set = (i: number, key: string, v: unknown) => onChange(value.map((x, n) => (n === i ? { ...x, [key]: v } : x)));
+  // a long list is shown a page at a time; the whole list is still one value, saved together
+  const per = f.perPage ?? Infinity;
+  const pages = Math.max(1, Math.ceil(value.length / per));
+  const pageOf = (i: number) => Math.floor(i / per) + 1;
+  const [shown, setShown] = useState(1);
+  const page = Math.min(shown, pages); // fewer pages after a delete
+  const from = (page - 1) * per;
+  const wrong = [...new Set(value.map((_, i) => i).filter((i) => under(errors, `${path}.${i}`)).map(pageOf))];
+  // after a save that failed, show the first page with a problem
+  const [seen, setSeen] = useState(errors);
+  if (seen !== errors) {
+    setSeen(errors);
+    if (wrong.length && !wrong.includes(page)) setShown(wrong[0]);
+  }
   const tools = (i: number) =>
     !fixed && (
       <Tools
@@ -224,6 +239,7 @@ function List({ field: f, value, onChange, errors, path }: Many<Value>) {
         onMove={(to) => {
           onChange(move(value, i, to));
           setOpen((o) => (o === i ? to : o === to ? i : o));
+          setShown(pageOf(to)); // follow it onto the next or previous page
         }}
         onRemove={() => {
           const title = String(value[i][of[0].key] || `${f.item} ${i + 1}`);
@@ -236,7 +252,8 @@ function List({ field: f, value, onChange, errors, path }: Many<Value>) {
   return (
     <div>
       <ul className={row ? "space-y-3" : "divide-y divide-(--rule) overflow-hidden rounded-[0.9rem] border border-(--rule)"}>
-        {value.map((item, i) => {
+        {value.slice(from, from + per).map((item, k) => {
+          const i = from + k;
           const at = `${path}.${i}`;
           const bad = under(errors, at);
           if (row)
@@ -284,6 +301,17 @@ function List({ field: f, value, onChange, errors, path }: Many<Value>) {
           );
         })}
       </ul>
+      <Pager
+        page={page}
+        pages={pages}
+        onPage={(p) => {
+          setShown(p);
+          setOpen(null);
+        }}
+        label={`Pages of ${f.label.toLowerCase()}`}
+        summary={`${from + 1}–${Math.min(from + per, value.length)} of ${value.length} ${f.label.toLowerCase()}`}
+        marked={wrong}
+      />
       {!fixed && (
         <Add
           label={`Add ${/^[aeiou]/i.test(f.item ?? "") ? "an" : "a"} ${f.item?.toLowerCase()}`}
@@ -291,6 +319,7 @@ function List({ field: f, value, onChange, errors, path }: Many<Value>) {
           onClick={() => {
             onChange([...value, blankItem(f)]);
             setOpen(value.length);
+            setShown(pageOf(value.length)); // the new one is on the last page
           }}
         />
       )}

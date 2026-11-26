@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Arrow } from "@/components/Icons";
 
 const round =
-  "grid size-11 place-items-center rounded-full border transition-[background-color,border-color,color] duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--accent)";
+  "grid size-11 place-items-center rounded-xl border transition-[background-color,border-color,color] duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--accent)";
 const link = `${round} border-(--rule) hover:border-gold hover:bg-gold hover:text-ink`;
 
 /** Page numbers between two arrows. Nothing when everything fits on one page. */

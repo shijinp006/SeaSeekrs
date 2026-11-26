@@ -1,6 +1,4 @@
 import Image from "next/image";
-import Frame from "@/components/Frame";
-import Rail from "@/components/Rail";
 import Title, { Tagged } from "@/components/Title";
 import { company } from "@/lib/content";
 import { contact as contactOf, whatsapp } from "@/lib/links";
@@ -9,52 +7,42 @@ import type { Site } from "@/lib/server/site";
 
 const out = { target: "_blank", rel: "noopener noreferrer" } as const;
 
+type Said = { who: string; quote: string; image?: string; date?: string };
+
+// For the reviews without a photo of their own: our boats and Dubai from the water (no people, so nobody seems to be
+// someone they are not), taken in turn
+const SCENES = ["y48-main", "tour-burj", "y31-main", "tour-ain", "y48-5", "tour-atlantis", "y31-2", "tour-harbour", "y48-1", "tour-lagoon"].map(
+  (n) => `/site/${n}.webp`,
+);
+
+/** One small card: a picture on top (the guest's own, or a scene), the words below */
+function ReviewCard({ r, alt, scene }: { r: Said; alt: string; scene: string }) {
+  return (
+    <figure className="flex h-[21rem] w-[min(72vw,19rem)] flex-col overflow-hidden rounded-port bg-white shadow-[0_1px_0_rgb(23_32_42/0.06),0_10px_30px_-18px_rgb(23_32_42/0.25)]">
+      <div className="relative h-40 w-full shrink-0 overflow-hidden bg-[#ece3d3]">
+        <Image src={r.image || scene} alt={r.image ? alt : ""} fill sizes="20rem" className="object-cover" />
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col justify-between p-4 sm:p-5">
+        <blockquote className="line-clamp-4 text-[0.9375rem] leading-normal">“{r.quote}”</blockquote>
+        <figcaption className="mt-3 text-[0.8125rem] text-(--mute)">
+          <cite className="font-medium not-italic text-(--fg)">{r.who}</cite>
+          {r.date && <span className="block">{r.date}</span>}
+        </figcaption>
+      </div>
+    </figure>
+  );
+}
+
+/** What guests said: small cards that keep moving across the screen (they stop only when a keyboard is in them) */
 export function Reviews({ site }: { site: Site }) {
   const reviews = site.content["home.reviews"];
   const { business } = site.content;
+  const said: Said[] = [...reviews.items, ...reviews.short];
   return (
-    <section id="reviews" data-tone="foam" className="overflow-x-clip py-[clamp(4rem,7.5vw,7.5rem)]">
-      <Rail
-        label={reviews.title}
-        head={
-          <Title heading={reviews} as="h2" data-lines className="display t-section" />
-        }
-      >
-        {reviews.items.map((r, i) => (
-          <li key={i} className="w-[84vw] max-w-[34rem] shrink-0 snap-start md:w-[54vw] lg:w-[38vw]">
-            <figure>
-              <Frame
-                src={r.image}
-                alt={site.alts[r.image] ?? ""}
-                delay={Math.min(i, 2) * 130}
-                sizes="(min-width: 1024px) 38vw, (min-width: 768px) 54vw, 84vw"
-                className="aspect-[3/2]"
-              />
-              <blockquote data-aos="fade-up" data-aos-delay="150" className="mt-6 pr-4 font-serif text-[clamp(1.0625rem,1.25vw,1.2rem)] leading-[1.5] [text-wrap:pretty]">
-                “{r.quote}”
-              </blockquote>
-              <figcaption data-aos="fade-up" data-aos-delay="220" className="mt-4 text-(--mute)">
-                <cite className="not-italic">{r.who}</cite>
-              </figcaption>
-            </figure>
-          </li>
-        ))}
-      </Rail>
-
-      <div className="container-x">
-        <ul className="mt-14 grid gap-x-12 gap-y-10 sm:grid-cols-2 md:mt-20 lg:grid-cols-3">
-          {reviews.short.map((r, i) => (
-            <li key={i} data-aos="fade-up" data-aos-delay={(i % 3) * 100}>
-              <figure>
-                <blockquote className="leading-relaxed">{r.quote}</blockquote>
-                <figcaption className="mt-2 text-[0.8125rem] text-(--mute)">
-                  <cite className="not-italic">{r.who}</cite>, {r.date}
-                </figcaption>
-              </figure>
-            </li>
-          ))}
-        </ul>
-        <p data-aos="fade-up" className="mt-12 flex flex-wrap gap-x-10 gap-y-4">
+    <section id="reviews" data-tone="foam" className="overflow-x-clip py-[clamp(2rem,3.5vw,3.5rem)]">
+      <div className="container-x flex flex-wrap items-end justify-between gap-x-10 gap-y-4">
+        <Title heading={reviews} as="h2" data-lines className="display t-section" />
+        <p data-aos="fade-up" className="flex flex-wrap gap-x-8 gap-y-3">
           <a href={business.trustpilot} {...out} className={LINK}>
             Review on Trustpilot
           </a>
@@ -63,40 +51,74 @@ export function Reviews({ site }: { site: Site }) {
           </a>
         </p>
       </div>
+      <div data-aos="fade-up" className="mt-[clamp(1.75rem,3vw,2.75rem)]">
+        <div className="marquee">
+          {/* twice over, so the row runs on without a seam; the copy is for the eye only */}
+          <ul className="marquee-track" aria-label={reviews.title}>
+            {said.map((r, i) => (
+              <li key={i}>
+                <ReviewCard r={r} alt={r.image ? (site.alts[r.image] ?? "") : ""} scene={SCENES[i % SCENES.length]} />
+              </li>
+            ))}
+          </ul>
+          <ul className="marquee-track" aria-hidden>
+            {said.map((r, i) => (
+              <li key={i}>
+                <ReviewCard r={r} alt="" scene={SCENES[i % SCENES.length]} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
     </section>
   );
 }
 
+/** The questions, beside a picture of the yacht with an invitation to ask on WhatsApp */
 export function Faq({ site }: { site: Site }) {
   const faq = site.content["home.faq"];
+  const picture = "/site/cta-yacht.webp";
   return (
-    <section id="faq" data-tone="shallow" className="py-[clamp(4rem,7.5vw,7.5rem)]">
-      <div className="container-x grid gap-x-12 gap-y-12 lg:grid-cols-12">
-        <div className="lg:col-span-5">
-          <Title heading={faq} as="h2" data-lines className="display t-section" />
-          <Tagged tag={faq.bodyTag} as="p" data-aos="fade-up" className="mt-6 max-w-sm t-lead text-(--mute)">
+    <section id="faq" data-tone="foam" className="py-[clamp(2rem,3.5vw,3.5rem)]">
+      <div className="container-x grid gap-x-10 gap-y-8 lg:grid-cols-12">
+        <div
+          data-aos="fade-up"
+          data-aos-img
+          className="relative isolate flex min-h-[26rem] flex-col justify-end overflow-hidden rounded-port p-6 text-white sm:p-8 lg:sticky lg:top-24 lg:col-span-5 lg:min-h-[min(76svh,40rem)]"
+        >
+          <Image src={picture} alt={site.alts[picture] ?? ""} fill sizes="(min-width: 1024px) 40vw, 100vw" className="-z-10 object-cover" />
+          <span className="absolute inset-0 -z-10 bg-linear-to-t from-navy-deep/95 via-navy-deep/55 to-navy-deep/5" />
+          <Title heading={faq} as="h2" className="display t-section" />
+          <Tagged tag={faq.bodyTag} as="p" className="mt-4 max-w-sm text-white/85">
             {faq.body}
           </Tagged>
-          <p data-aos="fade-up" className="mt-7">
-            <a href={whatsapp(site.content.business)} {...out} className={LINK}>
+          <p className="mt-6">
+            <a href={whatsapp(site.content.business)} {...out} className={BTN_GOLD}>
               Ask us on WhatsApp
             </a>
           </p>
         </div>
-        <div className="border-b border-(--rule) lg:col-span-7">
+        <div className="space-y-3 lg:col-span-7">
           {faq.items.map((f, i) => (
-            <details key={i} name="faq" data-aos="fade-left" className="faq group border-t border-(--rule)">
-              <summary className="flex cursor-pointer list-none items-start justify-between gap-6 py-5 text-[1rem] leading-snug outline-offset-4 focus-visible:outline-2 focus-visible:outline-(--accent) [&::-webkit-details-marker]:hidden">
-                <Tagged tag={faq.itemTag} as="div">
+            <details
+              key={i}
+              name="faq"
+              data-aos="fade-up"
+              className="faq group rounded-port border border-(--rule) bg-white/55 transition-colors open:bg-white"
+            >
+              <summary className="flex cursor-pointer list-none items-center gap-4 px-5 py-4 text-[1rem] leading-snug outline-offset-4 focus-visible:outline-2 focus-visible:outline-(--accent) sm:px-6 [&::-webkit-details-marker]:hidden">
+                <span className="w-7 shrink-0 font-semibold tabular-nums text-(--accent)">{String(i + 1).padStart(2, "0")}</span>
+                <Tagged tag={faq.itemTag} as="div" className="flex-1 font-medium">
                   {f.q}
                 </Tagged>
-                <span aria-hidden
-                  className="grid size-7 shrink-0 place-items-center rounded-full border border-(--rule) text-lg leading-none transition-[rotate,background-color,color] duration-500 group-open:rotate-45 group-open:bg-gold group-open:text-ink"
+                <span
+                  aria-hidden
+                  className="grid size-8 shrink-0 place-items-center rounded-xl border border-(--rule) text-lg leading-none transition-[rotate,background-color,color] duration-500 group-open:rotate-45 group-open:bg-gold group-open:text-ink"
                 >
                   +
                 </span>
               </summary>
-              <p className="max-w-2xl pb-8 leading-relaxed text-(--mute)">{f.a}</p>
+              <p className="max-w-2xl px-5 pb-5 pl-[4.25rem] leading-relaxed text-(--mute) sm:px-6 sm:pl-[4.75rem]">{f.a}</p>
             </details>
           ))}
         </div>
@@ -105,40 +127,6 @@ export function Faq({ site }: { site: Site }) {
   );
 }
 
-
-
-/** The last look at the sea, full width */
-export function Bow({ site }: { site: Site }) {
-  const bow = site.content["home.bow"];
-  return (
-    <section id="closing" data-over data-tone="deep" data-stage="open" data-shape="slices" className="stage">
-      <div className="stage-view">
-        <div className="stage-pic">
-          {/* taller than the section, so the yacht lies below the words */}
-          <div className="absolute inset-x-0 -bottom-[10%] -top-[4%] md:-bottom-[38%]">
-            <Image src={bow.image} alt={site.alts[bow.image] ?? ""} fill sizes="max(100vw, 150vh)" className="object-cover" />
-          </div>
-          <span className="stage-shade stage-shade-bow" />
-        </div>
-        <div className="stage-words container-x flex flex-col justify-between gap-10 text-white">
-          <Title heading={bow} as="h2" data-step="fade-down" className="display max-w-[16em] t-section" />
-          <div className="flex flex-col gap-7 md:flex-row md:items-end md:justify-between">
-            <Tagged tag={bow.bodyTag} as="p" data-step="fade-up" className="max-w-lg t-lead text-white/90">
-              {bow.body}
-            </Tagged>
-            <div data-step="fade-up" className="shrink-0">
-              <a href={whatsapp(site.content.business)} {...out} className={BTN_GOLD}>
-                {bow.cta}
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/** `home`: on the home page, where #links stay on the page */
 export function Footer({ site, home = true }: { site: Site; home?: boolean }) {
   const { business, "layout.footer": footer } = site.content;
   const contact = contactOf(business);
@@ -150,14 +138,12 @@ export function Footer({ site, home = true }: { site: Site; home?: boolean }) {
   ];
   const link = `${LINK} bg-[length:0%_1px]! hover:bg-[length:100%_1px]!`;
   return (
-    <footer id="contact" className={`relative z-10 bg-navy-deep pb-8 pt-16 text-white md:pt-24 ${home ? "text-[0.9375rem]" : ""}`}>
+    <footer id="contact" className={`relative z-10 bg-navy-deep pb-6 pt-12 text-white md:pt-16 ${home ? "text-[0.9375rem]" : ""}`}>
       <div className="container-x">
-        <div className="grid gap-14 sm:grid-cols-2 lg:grid-cols-12">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-12">
           <div data-aos="fade-up" className="sm:col-span-2 lg:col-span-5">
-            <Image src={company.logo.src} width={125} height={112} alt={site.alts[company.logo.src] || business.name} className="h-28 w-auto" />
-            <p className="mt-6 max-w-sm leading-relaxed text-white/65">
-              {footer.body}
-            </p>
+            <Image src={company.logo.src} width={125} height={112} alt={site.alts[company.logo.src] || business.name} className="h-20 w-auto" />
+            <p className="mt-4 max-w-sm leading-relaxed text-white/65">{footer.body}</p>
           </div>
           <address data-aos="fade-up" data-aos-delay="120" className="not-italic lg:col-span-4">
             <h2 className="text-white/60">Get in touch</h2>
@@ -192,10 +178,10 @@ export function Footer({ site, home = true }: { site: Site; home?: boolean }) {
             ))}
           </div>
         </div>
-        <p aria-hidden className="display mt-16 whitespace-nowrap text-[min(16vw,11rem)] leading-[1.05]! text-white/95">
+        <p aria-hidden className="display mt-10 whitespace-nowrap text-[min(13vw,6.5rem)] leading-[1.05]! text-white/95">
           Sea <em>Seakers</em>
         </p>
-        <div className="mt-6 flex flex-col justify-between gap-4 border-t border-white/15 pt-6 text-[0.8125rem] text-white/60 lg:flex-row">
+        <div className="mt-4 flex flex-col justify-between gap-3 border-t border-white/15 pt-5 text-[0.8125rem] text-white/60 lg:flex-row">
           <p>Copyright © 2026 {business.legal}</p>
           <p className="flex flex-wrap gap-x-6 gap-y-2">
             {footer.legal.map((l) => (

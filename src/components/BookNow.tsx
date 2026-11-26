@@ -150,7 +150,7 @@ function BookingDialog({ service, yachts, chat, onClose }: Props & { onClose: ()
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="grid size-10 shrink-0 place-items-center rounded-full border border-white/25 text-xl leading-none transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+            className="grid size-10 shrink-0 place-items-center rounded-xl border border-white/25 text-xl leading-none transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
           >
             ×
           </button>
