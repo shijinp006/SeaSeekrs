@@ -178,10 +178,7 @@ export function Footer({ site, home = true }: { site: Site; home?: boolean }) {
             ))}
           </div>
         </div>
-        <p aria-hidden className="display mt-10 whitespace-nowrap text-[min(13vw,6.5rem)] leading-[1.05]! text-white/95">
-          Sea <em>Seakers</em>
-        </p>
-        <div className="mt-4 flex flex-col justify-between gap-3 border-t border-white/15 pt-5 text-[0.8125rem] text-white/60 lg:flex-row">
+        <div className="mt-10 flex flex-col justify-between gap-3 border-t border-white/15 pt-5 text-[0.8125rem] text-white/60 lg:flex-row">
           <p>Copyright © 2026 {business.legal}</p>
           <p className="flex flex-wrap gap-x-6 gap-y-2">
             {footer.legal.map((l) => (
